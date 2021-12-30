@@ -2,7 +2,7 @@ import os
 import shutil
 from pathlib import Path
 from random import random
-from src.ImagePreprocessing.ImagePreprocessing import get_file_paths_in_dir
+from ImagePreprocessing.ImagePreprocessing import get_file_paths_in_dir
 
 
 TRAIN_FOLDER_NAME = 'train'

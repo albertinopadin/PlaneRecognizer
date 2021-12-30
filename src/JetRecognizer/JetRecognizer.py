@@ -1,4 +1,4 @@
-from src.ImagePreprocessing.ImagePreprocessing import load_label_encoder, save_label_encoder, \
+from ImagePreprocessing.ImagePreprocessing import load_label_encoder, save_label_encoder, \
     convert_labels_to_one_hot_vectors
 from JetRecognizerPreprocessing import get_random_train_fighter_images_as_pixel_values_generator, \
     get_random_validation_fighter_images_as_pixel_values_generator
@@ -7,10 +7,10 @@ import tensorflow as tf
 import numpy as np
 from time import perf_counter
 import os
-from src.Common.Platforms import in_mac_os
-from src.ImageObjectDetectors.TensorflowCNN4Images import TensorflowCNN4Images
-from src.ImageObjectDetectors.TorchCNN4Images import TorchCNN4Images
-from src.ImageObjectDetectors.CNN4ImagesBase import KernelProgression
+from Common.Platforms import in_mac_os
+from ImageObjectDetectors.TensorflowCNN4Images import TensorflowCNN4Images
+from ImageObjectDetectors.TorchCNN4Images import TorchCNN4Images
+from ImageObjectDetectors.CNN4ImagesBase import KernelProgression
 from sklearn.metrics import precision_score, accuracy_score
 
 

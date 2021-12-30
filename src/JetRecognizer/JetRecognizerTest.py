@@ -1,11 +1,11 @@
-from src.ImageObjectDetectors.TensorflowCNN4Images import TensorflowCNN4Images
+from ImageObjectDetectors.TensorflowCNN4Images import TensorflowCNN4Images
 from JetRecognizerPreprocessing import load_label_encoder, convert_labels_to_one_hot_vectors, \
     get_random_validation_fighter_images_as_pixel_values_generator, \
     get_random_test_fighter_images_as_pixel_values_generator
 import numpy as np
 from time import perf_counter
-from src.Common.Platforms import in_mac_os
-from src.ImageObjectDetectors.CNN4ImagesBase import KernelProgression
+from Common.Platforms import in_mac_os
+from ImageObjectDetectors.CNN4ImagesBase import KernelProgression
 from sklearn.metrics import precision_score, accuracy_score
 
 

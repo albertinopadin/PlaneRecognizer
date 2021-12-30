@@ -6,7 +6,7 @@ from multiprocessing.pool import ThreadPool
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.utils import to_categorical
 import random
-from src.Common.DL_FilePaths import PROJECT_ROOT
+from Common.DL_FilePaths import PROJECT_ROOT
 
 
 JPG_EXT = '.jpg'

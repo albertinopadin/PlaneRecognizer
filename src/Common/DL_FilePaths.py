@@ -1,5 +1,5 @@
 from pathlib import Path
-from src.Common.Platforms import in_mac_os, in_linux
+from Common.Platforms import in_mac_os, in_linux
 from enum import Enum
 
 

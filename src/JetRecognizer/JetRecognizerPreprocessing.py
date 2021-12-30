@@ -1,8 +1,8 @@
-from src.Common.DL_FilePaths import FIGHTER_JET, IMG_SIZE, get_fighter_jet_dir
-from src.ImagePreprocessing.ImagePreprocessing import *
-from src.ImagePreprocessing.TrainTestSeparator import copy_images_to_train_validation_test, \
+from Common.DL_FilePaths import FIGHTER_JET, IMG_SIZE, get_fighter_jet_dir
+from ImagePreprocessing.ImagePreprocessing import *
+from ImagePreprocessing.TrainTestSeparator import copy_images_to_train_validation_test, \
     TRAIN_FOLDER_NAME, VALIDATION_FOLDER_NAME, TEST_FOLDER_NAME
-from src.Common.TimerDecorator import timer
+from Common.TimerDecorator import timer
 import numpy as np
 from enum import Enum
 

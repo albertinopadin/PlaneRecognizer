@@ -3,9 +3,9 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPool2D, Dense, Flatten
 from tensorflow.keras.models import load_model
-from src.Common import test_training_utils as ttu
-from src.ImageObjectDetectors.CNN4ImagesBase import CNN4ImagesBase, KernelProgression
-from src.Common.DL_FilePaths import PROJECT_ROOT
+from Common import test_training_utils as ttu
+from ImageObjectDetectors.CNN4ImagesBase import CNN4ImagesBase, KernelProgression
+from Common.DL_FilePaths import PROJECT_ROOT
 
 # tf.config.set_soft_device_placement(True)
 physical_devices = tf.config.list_physical_devices('GPU')
