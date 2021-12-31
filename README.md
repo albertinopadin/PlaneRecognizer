@@ -1,5 +1,16 @@
 # PlaneRecognizer
-ML models to predict what type of aircraft is in a photo
+ML models to predict what type of aircraft is in a photo.
+
+It has been trained on the following fighter aircraft:
+
+- F-14
+- F-15
+- F-16
+- F-18
+- F-22
+- F-35
+
+In the future I will include other types as well.
 
 Simple Inference Binder:
 
