@@ -1,6 +1,7 @@
+fastai
+matplotlib
 numpy
 pandas
 scikit-learn
 tensorflow
 torch
-matplotlib
