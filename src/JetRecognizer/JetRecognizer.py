@@ -52,13 +52,13 @@ else:
     label_encoder = None
 
 BATCH_LOOPS = 25 if in_mac_os() else 25
-NUM_GEN_BATCHES = 25 if in_mac_os() else 25
+NUM_GEN_BATCHES = 30 if in_mac_os() else 30
 
 train_random_img_batch_generator = get_random_train_fighter_images_as_pixel_values_generator(num_batches=NUM_GEN_BATCHES)
 
-batch_size = 8 if in_mac_os() else 8  # Getting error in macOS if use batch size > 2 for 1920x1920 images
+batch_size = 10 if in_mac_os() else 10  # Getting error in macOS if use batch size > 2 for 1920x1920 images
 n_epochs = 3 if in_mac_os() else 3
-train_validation_split = 0.2
+train_validation_split = 0.1
 
 print(f"\n************ Starting training for {BATCH_LOOPS} batch loops in {'macOS' if in_mac_os() else 'Linux'}... ************\n")
 _start = perf_counter()
