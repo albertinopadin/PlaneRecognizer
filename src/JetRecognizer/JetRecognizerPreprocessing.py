@@ -138,6 +138,85 @@ def get_f35_preprocessed_images_as_pixel_values_threaded(size=IMG_SIZE.IS_960):
     return add_labels_to_images_threaded(normalized_imgs, Label.F35.value)
 
 
+# ----------- VALIDATION ----------- #
+def get_normalized_imgs_from_dir_threaded(jet_dir, folder_name, label):
+    normalized_imgs = load_normalized_images_in_dir_threaded(f'{jet_dir}/{folder_name}')
+    return add_labels_to_images_threaded(normalized_imgs, label.value)
+
+
+@timer
+def get_f22_validation_images_as_pixel_values_threaded(size=IMG_SIZE.IS_960):
+    jet_dir = get_fighter_jet_dir(FIGHTER_JET.F_22, size=size)
+    return get_normalized_imgs_from_dir_threaded(jet_dir, VALIDATION_FOLDER_NAME, Label.F22)
+
+
+@timer
+def get_f14_validation_images_as_pixel_values_threaded(size=IMG_SIZE.IS_960):
+    jet_dir = get_fighter_jet_dir(FIGHTER_JET.F_14, size=size)
+    return get_normalized_imgs_from_dir_threaded(jet_dir, VALIDATION_FOLDER_NAME, Label.F14)
+
+
+@timer
+def get_f15_validation_images_as_pixel_values_threaded(size=IMG_SIZE.IS_960):
+    jet_dir = get_fighter_jet_dir(FIGHTER_JET.F_15, size=size)
+    return get_normalized_imgs_from_dir_threaded(jet_dir, VALIDATION_FOLDER_NAME, Label.F15)
+
+
+@timer
+def get_f16_validation_images_as_pixel_values_threaded(size=IMG_SIZE.IS_960):
+    jet_dir = get_fighter_jet_dir(FIGHTER_JET.F_16, size=size)
+    return get_normalized_imgs_from_dir_threaded(jet_dir, VALIDATION_FOLDER_NAME, Label.F16)
+
+
+@timer
+def get_f18_validation_images_as_pixel_values_threaded(size=IMG_SIZE.IS_960):
+    jet_dir = get_fighter_jet_dir(FIGHTER_JET.F_18, size=size)
+    return get_normalized_imgs_from_dir_threaded(jet_dir, VALIDATION_FOLDER_NAME, Label.F18)
+
+
+@timer
+def get_f35_validation_images_as_pixel_values_threaded(size=IMG_SIZE.IS_960):
+    jet_dir = get_fighter_jet_dir(FIGHTER_JET.F_35, size=size)
+    return get_normalized_imgs_from_dir_threaded(jet_dir, VALIDATION_FOLDER_NAME, Label.F35)
+
+
+# ----------- TEST ----------- #
+@timer
+def get_f22_test_images_as_pixel_values_threaded(size=IMG_SIZE.IS_960):
+    jet_dir = get_fighter_jet_dir(FIGHTER_JET.F_22, size=size)
+    return get_normalized_imgs_from_dir_threaded(jet_dir, TEST_FOLDER_NAME, Label.F22)
+
+
+@timer
+def get_f14_test_images_as_pixel_values_threaded(size=IMG_SIZE.IS_960):
+    jet_dir = get_fighter_jet_dir(FIGHTER_JET.F_14, size=size)
+    return get_normalized_imgs_from_dir_threaded(jet_dir, TEST_FOLDER_NAME, Label.F14)
+
+
+@timer
+def get_f15_test_images_as_pixel_values_threaded(size=IMG_SIZE.IS_960):
+    jet_dir = get_fighter_jet_dir(FIGHTER_JET.F_15, size=size)
+    return get_normalized_imgs_from_dir_threaded(jet_dir, TEST_FOLDER_NAME, Label.F15)
+
+
+@timer
+def get_f16_test_images_as_pixel_values_threaded(size=IMG_SIZE.IS_960):
+    jet_dir = get_fighter_jet_dir(FIGHTER_JET.F_16, size=size)
+    return get_normalized_imgs_from_dir_threaded(jet_dir, TEST_FOLDER_NAME, Label.F16)
+
+
+@timer
+def get_f18_test_images_as_pixel_values_threaded(size=IMG_SIZE.IS_960):
+    jet_dir = get_fighter_jet_dir(FIGHTER_JET.F_18, size=size)
+    return get_normalized_imgs_from_dir_threaded(jet_dir, TEST_FOLDER_NAME, Label.F18)
+
+
+@timer
+def get_f35_test_images_as_pixel_values_threaded(size=IMG_SIZE.IS_960):
+    jet_dir = get_fighter_jet_dir(FIGHTER_JET.F_35, size=size)
+    return get_normalized_imgs_from_dir_threaded(jet_dir, TEST_FOLDER_NAME, Label.F35)
+
+
 # --------------------- GENERATOR METHODS --------------------- #
 def get_random_normalized_images_generator(jet_dir, folder_name, label):
     normalized_img_generator = load_normalized_rand_images_in_dir_generator(f'{jet_dir}/{folder_name}')
@@ -410,3 +489,39 @@ def get_random_test_fighter_images_as_pixel_values_generator(num_batches=1):
     ]
 
     return shuffle_and_return_generator(num_batches, fighter_img_generator_list)
+
+
+def get_all_validation_fighter_images_as_pixel_values():
+    f22 = get_f22_validation_images_as_pixel_values_threaded()
+    f14 = get_f14_validation_images_as_pixel_values_threaded()
+    f15 = get_f15_validation_images_as_pixel_values_threaded()
+    f16 = get_f16_validation_images_as_pixel_values_threaded()
+    f18 = get_f18_validation_images_as_pixel_values_threaded()
+    f35 = get_f35_validation_images_as_pixel_values_threaded()
+
+    fighter_img_list = []
+    fighter_img_list.extend(f14)
+    fighter_img_list.extend(f15)
+    fighter_img_list.extend(f16)
+    fighter_img_list.extend(f18)
+    fighter_img_list.extend(f22)
+    fighter_img_list.extend(f35)
+    return fighter_img_list
+
+
+def get_all_test_fighter_images_as_pixel_values():
+    f22 = get_f22_test_images_as_pixel_values_threaded()
+    f14 = get_f14_test_images_as_pixel_values_threaded()
+    f15 = get_f15_test_images_as_pixel_values_threaded()
+    f16 = get_f16_test_images_as_pixel_values_threaded()
+    f18 = get_f18_test_images_as_pixel_values_threaded()
+    f35 = get_f35_test_images_as_pixel_values_threaded()
+
+    fighter_img_list = []
+    fighter_img_list.extend(f14)
+    fighter_img_list.extend(f15)
+    fighter_img_list.extend(f16)
+    fighter_img_list.extend(f18)
+    fighter_img_list.extend(f22)
+    fighter_img_list.extend(f35)
+    return fighter_img_list

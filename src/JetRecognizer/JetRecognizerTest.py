@@ -1,7 +1,8 @@
 from ImageObjectDetectors.TensorflowCNN4Images import TensorflowCNN4Images
 from JetRecognizerPreprocessing import load_label_encoder, convert_labels_to_one_hot_vectors, \
     get_random_validation_fighter_images_as_pixel_values_generator, \
-    get_random_test_fighter_images_as_pixel_values_generator
+    get_random_test_fighter_images_as_pixel_values_generator, \
+    get_all_validation_fighter_images_as_pixel_values, get_all_test_fighter_images_as_pixel_values
 import numpy as np
 from time import perf_counter
 from Common.Platforms import in_mac_os
@@ -10,7 +11,7 @@ from sklearn.metrics import precision_score, accuracy_score
 
 
 def test_recognizer(recognizer, sample_list, test_set=False, print_individual=False):
-    print(f"\n************ Starting inference in {'macOS' if in_mac_os() else 'Linux'}... ************\n")
+    print(f"************ Starting inference in {'macOS' if in_mac_os() else 'Linux'}... ************")
     _start = perf_counter()
     test_images = np.array([img for label, img in sample_list])
     test_labels = [label for label, img in sample_list]
@@ -18,7 +19,7 @@ def test_recognizer(recognizer, sample_list, test_set=False, print_individual=Fa
     predictions = recognizer.predict(test_images, flatten_output=False, one_hot=True)
     _end = perf_counter()
     _elapsed = _end - _start
-    print(f"\n************ Inference on {len(test_images)} images took {_elapsed:0.4f} seconds). ************\n")
+    print(f"************ Inference on {len(test_images)} images took {_elapsed:0.4f} seconds). ************")
 
     if print_individual:
         print("Predictions vs. Ground Truth:")
@@ -51,23 +52,26 @@ jet_recognizer = TensorflowCNN4Images(INPUT_SHAPE,
 jet_recognizer.load_model(JET_RECOGNIZER_MODEL_FILENAME)
 label_encoder = load_label_encoder(LABEL_ENCODER_FILENAME)
 
-NUM_VALID_BATCHES = 10
-validation_random_img_batch_generator = get_random_validation_fighter_images_as_pixel_values_generator(num_batches=NUM_VALID_BATCHES)
-small_validation_sample_list = []
-print('Getting validation samples...')
-for i in range(NUM_VALID_BATCHES - 5):  # Hack due to RuntimeError StopIteration
-    # print(f"Val: {i}")
-    small_validation_sample_list.extend(next(validation_random_img_batch_generator))
+ONLY_SAMPLE = False
+
+if ONLY_SAMPLE:
+    NUM_VALID_BATCHES = 4
+    validation_random_img_batch_generator = get_random_validation_fighter_images_as_pixel_values_generator(num_batches=NUM_VALID_BATCHES)
+    validation_sample_list = next(validation_random_img_batch_generator)
+else:
+    print('Getting validation samples...')
+    validation_sample_list = get_all_validation_fighter_images_as_pixel_values()
 
 print("\n************ VALIDATION ************")
-test_recognizer(jet_recognizer, small_validation_sample_list)
+test_recognizer(jet_recognizer, validation_sample_list)
 
-NUM_TEST_BATCHES = 10
-test_random_img_batch_generator = get_random_test_fighter_images_as_pixel_values_generator(num_batches=NUM_TEST_BATCHES)
-small_test_sample_list = []
-print('Getting test samples...')
-for i in range(NUM_TEST_BATCHES - 5):  # Hack due to RuntimeError StopIteration
-    # print(f"Test: {i}")
-    small_test_sample_list.extend(next(test_random_img_batch_generator))
+if ONLY_SAMPLE:
+    NUM_TEST_BATCHES = 4
+    test_random_img_batch_generator = get_random_test_fighter_images_as_pixel_values_generator(num_batches=NUM_TEST_BATCHES)
+    test_sample_list = next(test_random_img_batch_generator)
+else:
+    print('Getting test samples...')
+    test_sample_list = get_all_test_fighter_images_as_pixel_values()
+
 print("\n************ TEST ************")
-test_recognizer(jet_recognizer, small_test_sample_list, test_set=True)
+test_recognizer(jet_recognizer, test_sample_list, test_set=True)
