@@ -82,7 +82,8 @@ if SAVE_MODEL:
 if SAVE_LABEL_ENCODER:
     save_label_encoder(label_encoder, LABEL_ENCODER_FILENAME)
 
-validation_random_img_batch_generator = get_random_validation_fighter_images_as_pixel_values_generator(num_batches=1)
+NUM_VAL_BATCHES = 4
+validation_random_img_batch_generator = get_random_validation_fighter_images_as_pixel_values_generator(num_batches=NUM_VAL_BATCHES)
 small_validation_sample_list = next(validation_random_img_batch_generator)
 validation_images = np.array([img for label, img in small_validation_sample_list])
 validation_labels = [label for label, img in small_validation_sample_list]

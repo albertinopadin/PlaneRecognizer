@@ -52,7 +52,7 @@ jet_recognizer = TensorflowCNN4Images(INPUT_SHAPE,
 jet_recognizer.load_model(JET_RECOGNIZER_MODEL_FILENAME)
 label_encoder = load_label_encoder(LABEL_ENCODER_FILENAME)
 
-ONLY_SAMPLE = True
+ONLY_SAMPLE = False
 
 if ONLY_SAMPLE:
     NUM_VALID_BATCHES = 4
