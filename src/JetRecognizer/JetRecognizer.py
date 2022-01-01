@@ -18,7 +18,7 @@ from sklearn.metrics import precision_score, accuracy_score
 INPUT_SHAPE = (960, 960, 3)  # Trying smaller images
 N_OUTPUT = 6
 # LEARNING_RATE = 0.001
-LEARNING_RATE = 0.01 if in_mac_os() else 0.01
+LEARNING_RATE = 0.03 if in_mac_os() else 0.01
 
 if in_mac_os():
     JET_RECOGNIZER_MODEL_FILENAME = 'jet_recognizer_apple_silicon' + '_' + str(INPUT_SHAPE[0])
@@ -52,7 +52,7 @@ else:
     label_encoder = None
 
 BATCH_LOOPS = 25 if in_mac_os() else 25
-NUM_GEN_BATCHES = 20 if in_mac_os() else 20
+NUM_GEN_BATCHES = 25 if in_mac_os() else 25
 
 train_random_img_batch_generator = get_random_train_fighter_images_as_pixel_values_generator(num_batches=NUM_GEN_BATCHES)
 

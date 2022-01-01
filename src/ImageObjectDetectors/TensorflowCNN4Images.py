@@ -41,8 +41,8 @@ class TensorflowCNN4Images(CNN4ImagesBase):
 
             print(f'Input Shape: {input_shape}')
             conv_layer_input, conv_layer_2, conv_layer_3 = self.create_conv_layers(input_shape=input_shape,
-                                                                                kernel_init=kernel_init,
-                                                                                kernel_progression=kernel_progression)
+                                                                                   kernel_init=kernel_init,
+                                                                                   kernel_progression=kernel_progression)
 
             model = Sequential(name='ImageCNN_TF')
             model.add(conv_layer_input)
@@ -78,23 +78,23 @@ class TensorflowCNN4Images(CNN4ImagesBase):
         with tf.device('GPU:0'):
             if input_shape is None:
                 return Conv2D(filters=n_filters,
-                            kernel_size=kernel_size,
-                            strides=stride,
-                            padding='same',
-                            activation='relu',
-                            data_format='channels_last',
-                            kernel_initializer=kernel_initializer,
-                            name=name)
+                              kernel_size=kernel_size,
+                              strides=stride,
+                              padding='same',
+                              activation='relu',
+                              data_format='channels_last',
+                              kernel_initializer=kernel_initializer,
+                              name=name)
             else:
                 return Conv2D(input_shape=input_shape,
-                            filters=n_filters,
-                            kernel_size=kernel_size,
-                            strides=stride,
-                            padding='same',
-                            activation='relu',
-                            data_format='channels_last',
-                            kernel_initializer=kernel_initializer,
-                            name=name)
+                              filters=n_filters,
+                              kernel_size=kernel_size,
+                              strides=stride,
+                              padding='same',
+                              activation='relu',
+                              data_format='channels_last',
+                              kernel_initializer=kernel_initializer,
+                              name=name)
 
     def create_conv_layers(self, input_shape, kernel_init, kernel_progression):
         if kernel_progression == KernelProgression.KERNEL_GETS_BIGGER:
