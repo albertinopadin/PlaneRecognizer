@@ -416,12 +416,21 @@ def create_train_validation_test_split():
 
 
 def shuffle_and_return_generator(num_batches, generator_list):
+    caught_exception = False
     while True:
+        if caught_exception:
+            break
+
         img_batch_list = []
         for _ in range(num_batches):
-            img_list = [next(gen) for gen in generator_list]
-            img_list = [img for img in img_list if img is not None]
-            img_batch_list.extend(img_list)
+            try:
+                img_list = [next(gen) for gen in generator_list]
+                img_list = [img for img in img_list if img is not None]
+                img_batch_list.extend(img_list)
+            except StopIteration as e:
+                print("No more images; caught StopIteration")
+                caught_exception = True
+                break
 
         if len(img_batch_list) == 0:
             # TODO: Perhaps raise StopIteration here?

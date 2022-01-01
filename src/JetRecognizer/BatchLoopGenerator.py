@@ -12,5 +12,5 @@ def image_batch_loop(num_batches, image_generator):
             del small_training_sample_list
             yield train_images, train_labels
         except StopIteration as e:
-            print(f"No more images for batch {i+1}; {e}")
+            print(f"No more images for batch {i+1}; caught StopIteration")
             break

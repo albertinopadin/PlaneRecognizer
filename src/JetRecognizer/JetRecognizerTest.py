@@ -28,7 +28,7 @@ def test_recognizer(recognizer, sample_list, test_set=False, print_individual=Fa
 
     print(f"Predictions type: {type(predictions)}")
     print(f"{'Test' if test_set else 'Validation'} labels type: {type(test_labels)}")
-    print(f"Model accuracy in {'Test' if test_set else 'Validation'}: {accuracy_score(test_labels, predictions):0.4f}")
+    print(f"Model accuracy in {'Test' if test_set else 'Validation'}: {accuracy_score(test_labels, predictions):0.4f}\n")
 
 
 INPUT_SHAPE = (960, 960, 3)
@@ -52,7 +52,7 @@ jet_recognizer = TensorflowCNN4Images(INPUT_SHAPE,
 jet_recognizer.load_model(JET_RECOGNIZER_MODEL_FILENAME)
 label_encoder = load_label_encoder(LABEL_ENCODER_FILENAME)
 
-ONLY_SAMPLE = False
+ONLY_SAMPLE = True
 
 if ONLY_SAMPLE:
     NUM_VALID_BATCHES = 4
