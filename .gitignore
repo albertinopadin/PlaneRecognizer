@@ -132,3 +132,5 @@ dmypy.json
 .idea/
 **__pycache__/
 **.ipynb_checkpoints/
+# fastai model is yuge:
+**_fastai.pth
