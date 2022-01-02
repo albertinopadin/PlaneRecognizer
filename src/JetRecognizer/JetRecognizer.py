@@ -18,6 +18,7 @@ from sklearn.metrics import precision_score, accuracy_score
 INPUT_SHAPE = (960, 960, 3)  # Trying smaller images
 N_OUTPUT = 6
 # LEARNING_RATE = 0.001
+# LEARNING_RATE = 0.03 if in_mac_os() else 0.03  # Best learning rate
 LEARNING_RATE = 0.03 if in_mac_os() else 0.03
 
 if in_mac_os():
@@ -57,7 +58,7 @@ NUM_GEN_BATCHES = 30 if in_mac_os() else 30
 train_random_img_batch_generator = get_random_train_fighter_images_as_pixel_values_generator(num_batches=NUM_GEN_BATCHES)
 
 batch_size = 8 if in_mac_os() else 8  # Getting error in macOS if I use batch size > 2 for 1920x1920 images
-n_epochs = 3 if in_mac_os() else 3
+n_epochs = 4 if in_mac_os() else 4
 train_validation_split = 0.1
 
 print(f"\n************ Starting training for {BATCH_LOOPS} batch loops in {'macOS' if in_mac_os() else 'Linux'}... ************\n")
@@ -82,7 +83,7 @@ if SAVE_MODEL:
 if SAVE_LABEL_ENCODER:
     save_label_encoder(label_encoder, LABEL_ENCODER_FILENAME)
 
-NUM_VAL_BATCHES = 4
+NUM_VAL_BATCHES = 8
 validation_random_img_batch_generator = get_random_validation_fighter_images_as_pixel_values_generator(num_batches=NUM_VAL_BATCHES)
 small_validation_sample_list = next(validation_random_img_batch_generator)
 validation_images = np.array([img for label, img in small_validation_sample_list])
@@ -90,9 +91,11 @@ validation_labels = [label for label, img in small_validation_sample_list]
 validation_labels, _ = convert_labels_to_one_hot_vectors(validation_labels, encoder=label_encoder)
 predictions = jet_recognizer.predict(validation_images, flatten_output=False, one_hot=True)
 
-print("Predictions vs. Ground Truth:")
-for t_pred, t_label in zip(predictions, validation_labels):
-    print(f'Prediction: {t_pred}, Truth: {t_label}')
+print_individual = False
+if print_individual:
+    print("Predictions vs. Ground Truth:")
+    for t_pred, t_label in zip(predictions, validation_labels):
+        print(f'Prediction: {t_pred}, Truth: {t_label}')
 
 print(f"Predictions type: {type(predictions)}")
 print(f"Validation labels type: {type(validation_labels)}")

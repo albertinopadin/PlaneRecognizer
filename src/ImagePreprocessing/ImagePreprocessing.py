@@ -140,8 +140,18 @@ def load_images_in_dir(directory, img_type=JPG_EXT):
     return images
 
 
+def load_random_image_in_dir(directory, img_type=JPG_EXT):
+    images = []
+    for fn in os.listdir(directory):
+        if fn.endswith(img_type):
+            img = Image.open(f'{directory}/{fn}')
+            images.append(img)
+    return random.choice(images)
+
+
 def load_images_in_dir_threaded(directory, img_type=JPG_EXT):
     image_filenames = [f'{directory}/{f}' for f in os.listdir(directory) if f.endswith(img_type)]
+    # print(f"[load_images_in_dir_threaded] Example image filename: {image_filenames[0]}")
     with ThreadPool(NUM_THREADS) as p:
         return p.map(Image.open, image_filenames)
 
@@ -183,6 +193,12 @@ def load_normalized_images_in_dir(directory, img_type=JPG_EXT):
     return normalized_imgs
 
 
+def load_random_normalized_image_in_dir(directory, img_type=JPG_EXT):
+    img = load_random_image_in_dir(directory, img_type)
+    normalized = normalize_pixels_in_img_obj(img)
+    return normalized
+
+
 def load_normalized_images_in_dir_threaded(directory, img_type=JPG_EXT):
     imgs = load_images_in_dir_threaded(directory, img_type)
     with ThreadPool(NUM_THREADS) as p:
@@ -205,7 +221,11 @@ def load_normalized_rand_images_in_dir_generator(directory, img_type=JPG_EXT):
 
 def convert_labels_to_one_hot_vectors(labels, encoder=None):
     label_encoder = LabelEncoder() if encoder is None else encoder
-    integer_encoded_labels = np.array(label_encoder.fit_transform(labels))
+    # print(f'label_encoder params: {label_encoder.get_params()}')
+    encoder_fit = label_encoder.fit_transform(labels)
+    # print(f'encoder_fit: {encoder_fit}')
+    integer_encoded_labels = np.array(encoder_fit)
+    # print(f'integer_encoded_labels: {integer_encoded_labels}')
     return to_categorical(integer_encoded_labels), label_encoder
 
 
