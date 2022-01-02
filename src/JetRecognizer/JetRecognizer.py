@@ -3,10 +3,8 @@ from ImagePreprocessing.ImagePreprocessing import load_label_encoder, save_label
 from JetRecognizerPreprocessing import get_random_train_fighter_images_as_pixel_values_generator, \
     get_random_validation_fighter_images_as_pixel_values_generator
 from BatchLoopGenerator import image_batch_loop
-import tensorflow as tf
 import numpy as np
 from time import perf_counter
-import os
 from Common.Platforms import in_mac_os
 from ImageObjectDetectors.TensorflowCNN4Images import TensorflowCNN4Images
 from ImageObjectDetectors.TorchCNN4Images import TorchCNN4Images
