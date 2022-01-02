@@ -42,6 +42,8 @@ if in_mac_os():
 else:
     JET_RECOGNIZER_MODEL_FILENAME = 'jet_recognizer_A6000' + '_' + str(INPUT_SHAPE[0])
 
+# JET_RECOGNIZER_MODEL_FILENAME = 'jet_recognizer_apple_silicon' + '_' + str(INPUT_SHAPE[0])
+
 LABEL_ENCODER_FILENAME = "jet_label_classes.npy"
 
 # Still need to define the model, might want to refactor so don't have to...
@@ -54,17 +56,17 @@ jet_recognizer.load_model(JET_RECOGNIZER_MODEL_FILENAME)
 label_encoder = load_label_encoder(LABEL_ENCODER_FILENAME)
 
 ONLY_SAMPLE = False
-# JET_TYPES = None
+JET_TYPES = None
 # JET_TYPES = [t for t in FIGHTER_JET]
 # Model is least accurate with F-18
-JET_TYPES = [
-    # FIGHTER_JET.F_14,
-    # FIGHTER_JET.F_15,
-    FIGHTER_JET.F_16,
-    # FIGHTER_JET.F_18,
-    FIGHTER_JET.F_22,
-    FIGHTER_JET.F_35
-]
+# JET_TYPES = [
+#     # FIGHTER_JET.F_14,
+#     # FIGHTER_JET.F_15,
+#     FIGHTER_JET.F_16,
+#     # FIGHTER_JET.F_18,
+#     FIGHTER_JET.F_22,
+#     FIGHTER_JET.F_35
+# ]
 
 print(f"Jet types: {JET_TYPES}")
 
