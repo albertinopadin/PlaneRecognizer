@@ -3,16 +3,16 @@ from pathlib import Path
 from Common.Platforms import in_mac_os
 from Common.DL_FilePaths import SIZE_960_DIR, FIGHTER_JET_SIZE_DIRS, IMG_SIZE, FIGHTER_JET
 from ImagePreprocessing.ImagePreprocessing import get_file_paths_in_dir, JPG_EXT
-from fastai.vision.data import ImageDataLoaders
+from fastai.vision.all import *
 from ImageObjectDetectors.FastaiSimpleModel import FastaiSimpleModel
 
 
-def get_filepaths_with_labels(size=IMG_SIZE.IS_960):
+def get_jet_filepaths_with_labels(size=IMG_SIZE.IS_960, subfolder='train'):
     filepaths = []
     labels = []
     for jet_type in FIGHTER_JET:
         jet_path = FIGHTER_JET_SIZE_DIRS.get(size).get(jet_type)
-        train_path = jet_path + '/train'
+        train_path = jet_path + f'/{subfolder}'
         fps = get_file_paths_in_dir(train_path)
         for filepath in fps:
             if filepath.endswith(JPG_EXT):
@@ -28,12 +28,12 @@ else:
     JET_RECOGNIZER_MODEL_FILENAME = 'jet_recognizer_A6000_960'
 
 # Set the following flag to load a saved model:
-LOAD_EXISTING_MODEL = False if in_mac_os() else False
+LOAD_EXISTING_MODEL = True if in_mac_os() else False
 # Set the following flag to save model after training:
 SAVE_MODEL = True
 
 data_path = Path(SIZE_960_DIR)
-filepaths, labels = get_filepaths_with_labels()
+filepaths, labels = get_jet_filepaths_with_labels()
 dls = ImageDataLoaders.from_lists(data_path, filepaths, labels)
 jet_recognizer = FastaiSimpleModel(dls)
 
