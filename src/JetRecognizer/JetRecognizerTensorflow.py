@@ -20,10 +20,10 @@ N_OUTPUT = 6
 LEARNING_RATE = 0.03 if in_mac_os() else 0.03
 
 if in_mac_os():
-    JET_RECOGNIZER_MODEL_FILENAME = 'jet_recognizer_apple_silicon' + '_' + str(INPUT_SHAPE[0])
+    JET_RECOGNIZER_MODEL_FILENAME = 'jet_recognizer_apple_silicon_' + str(INPUT_SHAPE[0])
     print('In macOS!')
 else:
-    JET_RECOGNIZER_MODEL_FILENAME = 'jet_recognizer_A6000' + '_' + str(INPUT_SHAPE[0])
+    JET_RECOGNIZER_MODEL_FILENAME = 'jet_recognizer_A6000_' + str(INPUT_SHAPE[0])
     
 # Set the following flag to load a saved model:
 LOAD_EXISTING_MODEL = True if in_mac_os() else True
