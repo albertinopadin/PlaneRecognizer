@@ -7,7 +7,6 @@ import numpy as np
 from time import perf_counter
 from Common.Platforms import in_mac_os
 from ImageObjectDetectors.TensorflowCNN4Images import TensorflowCNN4Images
-from ImageObjectDetectors.TorchCNN4Images import TorchCNN4Images
 from ImageObjectDetectors.CNN4ImagesBase import KernelProgression
 from sklearn.metrics import precision_score, accuracy_score
 
@@ -26,7 +25,7 @@ else:
     JET_RECOGNIZER_MODEL_FILENAME = 'jet_recognizer_A6000_' + str(INPUT_SHAPE[0])
     
 # Set the following flag to load a saved model:
-LOAD_EXISTING_MODEL = True if in_mac_os() else True
+LOAD_EXISTING_MODEL = False if in_mac_os() else True
 # Set the following flag to save model after training:
 SAVE_MODEL = True
 
@@ -40,7 +39,6 @@ jet_recognizer = TensorflowCNN4Images(INPUT_SHAPE,
                                       N_OUTPUT,
                                       LEARNING_RATE,
                                       kernel_progression=KernelProgression.KERNEL_GETS_BIGGER)
-# jet_recognizer = TorchCNN4Images(INPUT_SHAPE, N_OUTPUT, LEARNING_RATE)
 
 if LOAD_EXISTING_MODEL:
     jet_recognizer.load_model(JET_RECOGNIZER_MODEL_FILENAME)

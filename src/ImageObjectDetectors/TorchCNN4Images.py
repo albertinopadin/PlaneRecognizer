@@ -86,7 +86,7 @@ class TorchCNN4Images:
                 loss.backward()
                 total_loss += loss.item()
                 optimizer.step()
-            print(f"Epoch: {epoch + 1}, Epoch Loss: {total_loss:0.7f}")
+            print(f"Epoch: {epoch + 1}, Total Epoch Loss: {total_loss:0.7f}; last minibatch loss: {loss.item():0.7f}")
 
         validation_loss, validation_accuracy = self.validate(X_val, y_val, loss_function)
         print(f"Validation loss: {validation_loss:0.7f}; Validation accuracy: {validation_accuracy:0.4f}")

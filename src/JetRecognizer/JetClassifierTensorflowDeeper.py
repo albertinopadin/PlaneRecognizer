@@ -6,15 +6,13 @@ from BatchLoopGenerator import image_batch_loop
 import numpy as np
 from time import perf_counter
 from Common.Platforms import in_mac_os
-from ImageObjectDetectors.TorchCNN4Images import TorchCNN4Images
+from ImageObjectDetectors.TensorflowDeeperCNN import TensorflowDeeperCNN
+from ImageObjectDetectors.CNN4ImagesBase import KernelProgression
 from sklearn.metrics import precision_score, accuracy_score
 
-# INPUT_SHAPE = (1920, 1920, 3)
-INPUT_SHAPE = (960, 960, 3)  # Trying smaller images
+INPUT_SHAPE = (960, 960, 3)
 N_OUTPUT = 6
-# LEARNING_RATE = 0.001
-# LEARNING_RATE = 0.03 if in_mac_os() else 0.03  # Best learning rate
-LEARNING_RATE = 1 if in_mac_os() else 0.3
+LEARNING_RATE = 0.03 if in_mac_os() else 0.03  # Best learning rate
 
 if in_mac_os():
     JET_RECOGNIZER_MODEL_FILENAME = 'jet_recognizer_apple_silicon_' + str(INPUT_SHAPE[0])
@@ -33,7 +31,7 @@ LOAD_EXISTING_LABEL_ENCODER = True
 # Set to save the label encoder:
 SAVE_LABEL_ENCODER = True if in_mac_os() else True
 
-jet_recognizer = TorchCNN4Images(INPUT_SHAPE, N_OUTPUT, LEARNING_RATE)
+jet_recognizer = TensorflowDeeperCNN(INPUT_SHAPE, N_OUTPUT, LEARNING_RATE)
 
 if LOAD_EXISTING_MODEL:
     jet_recognizer.load_model(JET_RECOGNIZER_MODEL_FILENAME)
@@ -43,14 +41,14 @@ if LOAD_EXISTING_LABEL_ENCODER:
 else:
     label_encoder = None
 
-BATCH_LOOPS = 2 if in_mac_os() else 25
-NUM_GEN_BATCHES = 30 if in_mac_os() else 30
+BATCH_LOOPS = 3 if in_mac_os() else 25
+NUM_GEN_BATCHES = 25 if in_mac_os() else 30
 
-train_random_img_batch_generator = \
-    get_random_train_fighter_images_as_pixel_values_generator(num_batches=NUM_GEN_BATCHES)
+train_random_img_batch_generator = get_random_train_fighter_images_as_pixel_values_generator(
+    num_batches=NUM_GEN_BATCHES)
 
-batch_size = 8 if in_mac_os() else 8  # Getting error in macOS if I use batch size > 2 for 1920x1920 images
-n_epochs = 4 if in_mac_os() else 4
+batch_size = 2 if in_mac_os() else 2
+n_epochs = 3 if in_mac_os() else 3
 train_validation_split = 0.1
 
 print(
