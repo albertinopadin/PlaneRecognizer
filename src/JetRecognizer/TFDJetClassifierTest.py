@@ -1,13 +1,11 @@
-from ImageObjectDetectors.TensorflowCNN4Images import TensorflowCNN4Images
+from ImageObjectDetectors.TensorflowDeeperCNN import TensorflowDeeperCNN
 from JetRecognizerPreprocessing import load_label_encoder, \
     get_random_validation_fighter_images_as_pixel_values_generator, \
     get_random_test_fighter_images_as_pixel_values_generator, \
     get_validation_fighter_images_as_pixel_values, get_test_fighter_images_as_pixel_values
 from Common.Platforms import in_mac_os
-from ImageObjectDetectors.CNN4ImagesBase import KernelProgression
 from Common.DL_FilePaths import FIGHTER_JET
 from ClassifierTestUtils import test_recognizer
-
 
 INPUT_SHAPE = (960, 960, 3)
 N_OUTPUT = 6
@@ -24,10 +22,7 @@ else:
 LABEL_ENCODER_FILENAME = "jet_label_classes.npy"
 
 # Still need to define the model, might want to refactor so don't have to...
-jet_recognizer = TensorflowCNN4Images(INPUT_SHAPE,
-                                      N_OUTPUT,
-                                      LEARNING_RATE,
-                                      kernel_progression=KernelProgression.KERNEL_GETS_BIGGER)
+jet_recognizer = TensorflowDeeperCNN(INPUT_SHAPE, N_OUTPUT, LEARNING_RATE)
 
 jet_recognizer.load_model(JET_RECOGNIZER_MODEL_FILENAME)
 label_encoder = load_label_encoder(LABEL_ENCODER_FILENAME)

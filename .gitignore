@@ -135,4 +135,5 @@ dmypy.json
 # fastai model is yuge:
 **_fastai.pth
 # Deeper Tensorflow model:
+**_tf_d_nmp.h5
 **_tf_d.h5

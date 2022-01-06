@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPool2D, Dense, Flatten
+from tensorflow.keras.layers import Conv2D, MaxPool2D, Dense, Flatten, Dropout
 from tensorflow.keras.models import load_model
 from Common import test_training_utils as ttu
 from ImageObjectDetectors.CNN4ImagesBase import CNN4ImagesBase, KernelProgression
@@ -49,8 +49,16 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
                 conv_layer_3,
                 MaxPool2D(pool_size=(2, 2)),
                 conv_layer_4,
+                MaxPool2D(pool_size=(2, 2)),
                 Flatten(),
                 Dense(units=256, activation='relu'),
+                Dropout(0.2),
+                Dense(units=128, activation='relu'),
+                Dropout(0.2),
+                Dense(units=64, activation='relu'),
+                Dropout(0.2),
+                Dense(units=32, activation='relu'),
+                Dropout(0.2),
                 output_layer
             ], name='ImageCNN_TF')
 
@@ -126,11 +134,12 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
                                                                          train_labels,
                                                                          train_validation_split)
         with tf.device('GPU:0'):
-            self.model.fit(x=X_train, y=y_train, epochs=n_epochs, batch_size=batch_size)
+            history = self.model.fit(x=X_train, y=y_train, epochs=n_epochs, batch_size=batch_size)
             test_loss, test_accuracy = self.model.evaluate(X_val, y_val)
 
-        print(f"Test loss: {test_loss}, "
-              f"Test accuracy: {test_accuracy}")
+        print(f"Test loss: {test_loss:0.4f}, "
+              f"Test accuracy: {test_accuracy:0.4f}")
+        return history
 
     def predict_classes(self, input_data):
         # print(f"input data shape: {input_data.shape}")

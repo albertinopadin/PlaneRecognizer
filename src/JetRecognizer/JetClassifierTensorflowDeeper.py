@@ -7,8 +7,8 @@ import numpy as np
 from time import perf_counter
 from Common.Platforms import in_mac_os
 from ImageObjectDetectors.TensorflowDeeperCNN import TensorflowDeeperCNN
-from ImageObjectDetectors.CNN4ImagesBase import KernelProgression
-from sklearn.metrics import precision_score, accuracy_score
+from sklearn.metrics import accuracy_score
+from ClassifierTestUtils import show_history
 
 INPUT_SHAPE = (960, 960, 3)
 N_OUTPUT = 6
@@ -21,7 +21,7 @@ else:
     JET_RECOGNIZER_MODEL_FILENAME = 'jet_recognizer_A6000_' + str(INPUT_SHAPE[0])
 
 # Set the following flag to load a saved model:
-LOAD_EXISTING_MODEL = True if in_mac_os() else False
+LOAD_EXISTING_MODEL = False if in_mac_os() else False
 # Set the following flag to save model after training:
 SAVE_MODEL = True
 
@@ -41,8 +41,8 @@ if LOAD_EXISTING_LABEL_ENCODER:
 else:
     label_encoder = None
 
-BATCH_LOOPS = 3 if in_mac_os() else 25
-NUM_GEN_BATCHES = 25 if in_mac_os() else 30
+BATCH_LOOPS = 25 if in_mac_os() else 25
+NUM_GEN_BATCHES = 30 if in_mac_os() else 30
 
 train_random_img_batch_generator = get_random_train_fighter_images_as_pixel_values_generator(
     num_batches=NUM_GEN_BATCHES)
@@ -58,15 +58,18 @@ for train_images, train_labels in image_batch_loop(BATCH_LOOPS, train_random_img
     print(f'Train labels (before one-hot conversion), len: {len(train_labels)}, : {train_labels}')
     train_labels, label_encoder = convert_labels_to_one_hot_vectors(train_labels, encoder=label_encoder)
     # TODO: How to get validation set if we are using a generator? Probably need to look into the fit_generator methods
-    jet_recognizer.train(train_images=train_images,
-                         train_labels=train_labels,
-                         batch_size=batch_size,
-                         n_epochs=n_epochs,
-                         train_validation_split=train_validation_split)
+    history = jet_recognizer.train(train_images=train_images,
+                                   train_labels=train_labels,
+                                   batch_size=batch_size,
+                                   n_epochs=n_epochs,
+                                   train_validation_split=train_validation_split)
 _end = perf_counter()
 _elapsed = _end - _start
 print(
     f"\n************ Training {BATCH_LOOPS} loops took {int(_elapsed / 60)} minutes {int(_elapsed % 60)} seconds). ************\n")
+
+print(f'history: {history}')
+# show_history(history)
 
 if SAVE_MODEL:
     jet_recognizer.save_model(JET_RECOGNIZER_MODEL_FILENAME)
