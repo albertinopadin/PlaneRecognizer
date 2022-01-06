@@ -134,11 +134,15 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
                                                                          train_labels,
                                                                          train_validation_split)
         with tf.device('GPU:0'):
-            history = self.model.fit(x=X_train, y=y_train, epochs=n_epochs, batch_size=batch_size)
-            test_loss, test_accuracy = self.model.evaluate(X_val, y_val)
+            history = self.model.fit(x=X_train,
+                                     y=y_train,
+                                     epochs=n_epochs,
+                                     batch_size=batch_size,
+                                     validation_data=(X_val, y_val))
+            # test_loss, test_accuracy = self.model.evaluate(X_val, y_val)
 
-        print(f"Test loss: {test_loss:0.4f}, "
-              f"Test accuracy: {test_accuracy:0.4f}")
+        # print(f"Test loss: {test_loss:0.4f}, "
+        #       f"Test accuracy: {test_accuracy:0.4f}")
         return history
 
     def predict_classes(self, input_data):

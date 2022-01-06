@@ -21,7 +21,7 @@ else:
     JET_RECOGNIZER_MODEL_FILENAME = 'jet_recognizer_A6000_' + str(INPUT_SHAPE[0])
 
 # Set the following flag to load a saved model:
-LOAD_EXISTING_MODEL = False if in_mac_os() else False
+LOAD_EXISTING_MODEL = True if in_mac_os() else True
 # Set the following flag to save model after training:
 SAVE_MODEL = True
 
@@ -68,8 +68,7 @@ _elapsed = _end - _start
 print(
     f"\n************ Training {BATCH_LOOPS} loops took {int(_elapsed / 60)} minutes {int(_elapsed % 60)} seconds). ************\n")
 
-print(f'history: {history}')
-# show_history(history)
+show_history(history)
 
 if SAVE_MODEL:
     jet_recognizer.save_model(JET_RECOGNIZER_MODEL_FILENAME)
