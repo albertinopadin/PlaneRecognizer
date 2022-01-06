@@ -13,7 +13,8 @@ from ClassifierTestUtils import show_history
 INPUT_SHAPE = (960, 960, 3)
 N_OUTPUT = 6
 # LEARNING_RATE = 0.03 if in_mac_os() else 0.03
-LEARNING_RATE = 0.01 if in_mac_os() else 0.01
+# LEARNING_RATE = 0.01 if in_mac_os() else 0.01  # Best starting learning rate
+LEARNING_RATE = 0.003 if in_mac_os() else 0.003
 
 if in_mac_os():
     JET_RECOGNIZER_MODEL_FILENAME = 'jet_recognizer_apple_silicon_' + str(INPUT_SHAPE[0])
