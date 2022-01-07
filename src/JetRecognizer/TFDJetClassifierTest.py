@@ -17,8 +17,6 @@ if in_mac_os():
 else:
     JET_RECOGNIZER_MODEL_FILENAME = 'jet_recognizer_A6000' + '_' + str(INPUT_SHAPE[0])
 
-# JET_RECOGNIZER_MODEL_FILENAME = 'jet_recognizer_apple_silicon' + '_' + str(INPUT_SHAPE[0])
-
 LABEL_ENCODER_FILENAME = "jet_label_classes.npy"
 
 # Still need to define the model, might want to refactor so don't have to...
@@ -34,16 +32,15 @@ ONLY_SAMPLE = False
 JET_TYPES = [
     # FIGHTER_JET.F_14,
     # FIGHTER_JET.F_15,
-    FIGHTER_JET.F_16,
+    # FIGHTER_JET.F_16,
     # FIGHTER_JET.F_18,
     FIGHTER_JET.F_22,
-    FIGHTER_JET.F_35
+    # FIGHTER_JET.F_35
 ]
-
 print(f"Jet types: {JET_TYPES}")
 
 if ONLY_SAMPLE:
-    NUM_VALID_BATCHES = 60
+    NUM_VALID_BATCHES = 50
     validation_random_img_batch_generator = get_random_validation_fighter_images_as_pixel_values_generator(num_batches=NUM_VALID_BATCHES)
     validation_sample_list = next(validation_random_img_batch_generator)
 else:

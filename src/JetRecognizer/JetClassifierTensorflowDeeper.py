@@ -8,13 +8,16 @@ from time import perf_counter
 from Common.Platforms import in_mac_os
 from ImageObjectDetectors.TensorflowDeeperCNN import TensorflowDeeperCNN
 from sklearn.metrics import accuracy_score
-from ClassifierTestUtils import show_history
+from ClassifierTestUtils import show_tensorflow_histories
 
 INPUT_SHAPE = (960, 960, 3)
 N_OUTPUT = 6
 # LEARNING_RATE = 0.03 if in_mac_os() else 0.03
 # LEARNING_RATE = 0.01 if in_mac_os() else 0.01  # Best starting learning rate
 LEARNING_RATE = 0.003 if in_mac_os() else 0.003
+# LEARNING_RATE = 0.001 if in_mac_os() else 0.001
+# LEARNING_RATE = 0.0003 if in_mac_os() else 0.0003
+# LEARNING_RATE = 0.0001 if in_mac_os() else 0.0001
 
 if in_mac_os():
     JET_RECOGNIZER_MODEL_FILENAME = 'jet_recognizer_apple_silicon_' + str(INPUT_SHAPE[0])
@@ -23,7 +26,7 @@ else:
     JET_RECOGNIZER_MODEL_FILENAME = 'jet_recognizer_A6000_' + str(INPUT_SHAPE[0])
 
 # Set the following flag to load a saved model:
-LOAD_EXISTING_MODEL = True if in_mac_os() else True
+LOAD_EXISTING_MODEL = True if in_mac_os() else False
 # Set the following flag to save model after training:
 SAVE_MODEL = True
 
@@ -56,6 +59,7 @@ train_validation_split = 0.1
 print(
     f"\n************ Starting training for {BATCH_LOOPS} batch loops in {'macOS' if in_mac_os() else 'Linux'}... ************\n")
 _start = perf_counter()
+histories = []
 for train_images, train_labels in image_batch_loop(BATCH_LOOPS, train_random_img_batch_generator):
     print(f'Train labels (before one-hot conversion), len: {len(train_labels)}, : {train_labels}')
     train_labels, label_encoder = convert_labels_to_one_hot_vectors(train_labels, encoder=label_encoder)
@@ -65,12 +69,13 @@ for train_images, train_labels in image_batch_loop(BATCH_LOOPS, train_random_img
                                    batch_size=batch_size,
                                    n_epochs=n_epochs,
                                    train_validation_split=train_validation_split)
+    histories.append(history)
 _end = perf_counter()
 _elapsed = _end - _start
 print(
     f"\n************ Training {BATCH_LOOPS} loops took {int(_elapsed / 60)} minutes {int(_elapsed % 60)} seconds). ************\n")
 
-show_history(history)
+show_tensorflow_histories(histories)
 
 if SAVE_MODEL:
     jet_recognizer.save_model(JET_RECOGNIZER_MODEL_FILENAME)

@@ -4,7 +4,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPool2D, Dense, Flatten, Dropout
 from tensorflow.keras.models import load_model
 from Common import test_training_utils as ttu
-from ImageObjectDetectors.CNN4ImagesBase import CNN4ImagesBase, KernelProgression
+from ImageObjectDetectors.CNN4ImagesBase import CNN4ImagesBase
 from Common.DL_FilePaths import PROJECT_ROOT
 
 # tf.config.set_soft_device_placement(True)
@@ -52,11 +52,11 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
                 MaxPool2D(pool_size=(2, 2)),
                 Flatten(),
                 Dense(units=256, activation='relu'),
-                Dropout(0.2),
+                Dropout(0.5),
                 Dense(units=128, activation='relu'),
-                Dropout(0.2),
+                Dropout(0.4),
                 Dense(units=64, activation='relu'),
-                Dropout(0.2),
+                Dropout(0.3),
                 Dense(units=32, activation='relu'),
                 Dropout(0.2),
                 output_layer
