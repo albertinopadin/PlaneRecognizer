@@ -52,11 +52,11 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
                 MaxPool2D(pool_size=(2, 2)),
                 Flatten(),
                 Dense(units=256, activation='relu'),
-                Dropout(0.5),
+                Dropout(0.8),
                 Dense(units=128, activation='relu'),
-                Dropout(0.4),
+                Dropout(0.6),
                 Dense(units=64, activation='relu'),
-                Dropout(0.3),
+                Dropout(0.4),
                 Dense(units=32, activation='relu'),
                 Dropout(0.2),
                 output_layer
@@ -67,8 +67,8 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
             # model.compile(loss=loss, metrics=['accuracy'])  # Works on Apple Silicon, but model doesn't learn
             # model.compile(optimizer='nadam', loss=loss, metrics=['accuracy'])  # Seems to work better
             # optimizer = tf.keras.optimizers.Nadam(learning_rate=learning_rate)
-            # optimizer = tf.keras.optimizers.RMSprop(learning_rate=learning_rate)
-            optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate)
+            optimizer = tf.keras.optimizers.RMSprop(learning_rate=learning_rate)
+            # optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate)
             model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
 
             model.summary()
@@ -143,6 +143,14 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
 
         # print(f"Test loss: {test_loss:0.4f}, "
         #       f"Test accuracy: {test_accuracy:0.4f}")
+        return history
+
+    def train_all(self, train_gen, valid_gen, n_epochs, batch_size):
+        with tf.device('GPU:0'):
+            history = self.model.fit(train_gen,
+                                     epochs=n_epochs,
+                                     batch_size=batch_size,
+                                     validation_data=valid_gen)
         return history
 
     def predict_classes(self, input_data):
