@@ -67,8 +67,8 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
             # model.compile(loss=loss, metrics=['accuracy'])  # Works on Apple Silicon, but model doesn't learn
             # model.compile(optimizer='nadam', loss=loss, metrics=['accuracy'])  # Seems to work better
             # optimizer = tf.keras.optimizers.Nadam(learning_rate=learning_rate)
-            optimizer = tf.keras.optimizers.RMSprop(learning_rate=learning_rate)
-            # optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate)
+            # optimizer = tf.keras.optimizers.RMSprop(learning_rate=learning_rate)
+            optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate)
             model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
 
             model.summary()

@@ -16,11 +16,12 @@ from Common.DL_FilePaths import SIZE_960_DIR
 
 INPUT_SHAPE = (960, 960, 3)
 N_OUTPUT = 6
+LEARNING_RATE = 0.1 if in_mac_os() else 0.1
 # LEARNING_RATE = 0.03 if in_mac_os() else 0.03
 # LEARNING_RATE = 0.01 if in_mac_os() else 0.01  # Best starting learning rate
 # LEARNING_RATE = 0.003 if in_mac_os() else 0.003
 # LEARNING_RATE = 0.001 if in_mac_os() else 0.001
-LEARNING_RATE = 0.0003 if in_mac_os() else 0.0003
+# LEARNING_RATE = 0.0003 if in_mac_os() else 0.0003
 # LEARNING_RATE = 0.0001 if in_mac_os() else 0.0001
 
 if in_mac_os():
@@ -50,12 +51,12 @@ if LOAD_EXISTING_LABEL_ENCODER:
 else:
     label_encoder = None
 
-BATCH_LOOPS = 25 if in_mac_os() else 25
-NUM_GEN_BATCHES = 30 if in_mac_os() else 30
-
-train_random_img_batch_generator = get_random_train_fighter_images_as_pixel_values_generator(
-    num_batches=NUM_GEN_BATCHES)
-
+# BATCH_LOOPS = 25 if in_mac_os() else 25
+# NUM_GEN_BATCHES = 30 if in_mac_os() else 30
+#
+# train_random_img_batch_generator = get_random_train_fighter_images_as_pixel_values_generator(
+#     num_batches=NUM_GEN_BATCHES)
+#
 # batch_size = 2 if in_mac_os() else 2
 # n_epochs = 3 if in_mac_os() else 3
 # train_validation_split = 0.1
@@ -88,7 +89,7 @@ data_dir = SIZE_960_DIR + '/train'
 augs_gen = ImageDataGenerator(
     rescale=1./255,
     horizontal_flip=True,
-    height_shift_range=.2,
+    # height_shift_range=.2,
     vertical_flip=True,
     validation_split=0.1
 )
@@ -111,7 +112,7 @@ valid_gen = augs_gen.flow_from_directory(
 )
 
 batch_size = 2 if in_mac_os() else 2
-n_epochs = 1 if in_mac_os() else 10
+n_epochs = 5 if in_mac_os() else 10
 
 print(f"\n************ Starting training for {n_epochs} epochs in "
       f"{'macOS' if in_mac_os() else 'Linux'}... ************\n")
@@ -120,7 +121,7 @@ history = jet_recognizer.train_all(train_gen=train_gen, valid_gen=valid_gen, n_e
 _end = perf_counter()
 _elapsed = _end - _start
 print(
-    f"\n************ Training {BATCH_LOOPS} loops took {int(_elapsed / 60)} minutes "
+    f"\n************ Training {n_epochs} epochs took {int(_elapsed / 60)} minutes "
     f"{int(_elapsed % 60)} seconds). ************\n")
 
 show_tensorflow_history(history)
