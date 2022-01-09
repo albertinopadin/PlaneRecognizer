@@ -1,6 +1,8 @@
-from PIL import Image, ImageOps
-import numpy as np
 import os
+import numpy as np
+import tensorflow as tf
+from PIL import Image, ImageOps
+from os.path import isfile, join
 from multiprocessing import Pool, cpu_count
 from multiprocessing.pool import ThreadPool
 from sklearn.preprocessing import LabelEncoder
@@ -15,8 +17,11 @@ NUM_CPUS = cpu_count()
 NUM_THREADS = 4
 
 
-def get_file_paths_in_dir(directory):
-    return [f'{directory}/{fn}' for fn in os.listdir(directory)]
+def get_file_paths_in_dir(directory, exclude_subfolders=True):
+    if exclude_subfolders:
+        return [f'{directory}/{fn}' for fn in os.listdir(directory) if isfile(join(directory, fn))]
+    else:
+        return [f'{directory}/{fn}' for fn in os.listdir(directory)]
 
 
 def create_preprocessed_image_dir(dir_name):
@@ -156,8 +161,18 @@ def load_images_in_dir_threaded(directory, img_type=JPG_EXT):
         return p.map(Image.open, image_filenames)
 
 
-def load_images_in_dir_generator(directory, img_type=JPG_EXT):
-    for fn in os.listdir(directory):
+def load_images_in_dir_generator(directory, img_type=JPG_EXT, shuffle=True, recursive=False):
+    if recursive:
+        list_dir = []
+        for folder,_,fnames in os.walk(directory):
+            list_dir.extend(f'{folder}/{fnames}')
+    else:
+        list_dir = os.listdir(directory)
+
+    if shuffle:
+        random.shuffle(list_dir)
+
+    for fn in list_dir:
         if fn.endswith(img_type):
             img = Image.open(f'{directory}/{fn}')
             yield img
@@ -217,6 +232,13 @@ def load_normalized_rand_images_in_dir_generator(directory, img_type=JPG_EXT):
     for img in load_img_generator:
         normalized = normalize_pixels_in_img_obj(img)
         yield normalized
+
+
+def load_random_cropped_normalized_images_in_dir_generator(directory, crop_size, img_type=JPG_EXT, recursive=True):
+    load_img_generator = load_images_in_dir_generator(directory, img_type, recursive=recursive)
+    for img in load_img_generator:
+        normalized = normalize_pixels_in_img_obj(img)
+        yield tf.image.random_crop(normalized, size=crop_size)
 
 
 def convert_labels_to_one_hot_vectors(labels, encoder=None):

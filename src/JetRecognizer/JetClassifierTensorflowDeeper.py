@@ -11,15 +11,15 @@ from sklearn.metrics import accuracy_score
 from ClassifierTestUtils import show_tensorflow_history, show_tensorflow_histories
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from Common.DL_FilePaths import SIZE_960_DIR
+from Common.DL_FilePaths import SIZE_960_DIR, SIZE_1920_DIR
 
 
-INPUT_SHAPE = (960, 960, 3)
+INPUT_SHAPE = (862, 862, 3)
 N_OUTPUT = 6
-LEARNING_RATE = 0.1 if in_mac_os() else 0.1
+# LEARNING_RATE = 0.1 if in_mac_os() else 0.1
 # LEARNING_RATE = 0.03 if in_mac_os() else 0.03
 # LEARNING_RATE = 0.01 if in_mac_os() else 0.01  # Best starting learning rate
-# LEARNING_RATE = 0.003 if in_mac_os() else 0.003
+LEARNING_RATE = 0.003 if in_mac_os() else 0.003
 # LEARNING_RATE = 0.001 if in_mac_os() else 0.001
 # LEARNING_RATE = 0.0003 if in_mac_os() else 0.0003
 # LEARNING_RATE = 0.0001 if in_mac_os() else 0.0001
@@ -84,9 +84,10 @@ else:
 
 # From: https://medium.com/intelligentmachines/convolutional-neural-network-and-regularization-techniques-with-tensorflow-and-keras-5a09e6e65dc7
 
-data_dir = SIZE_960_DIR + '/train'
+train_dir = SIZE_1920_DIR + '/train'
 
 augs_gen = ImageDataGenerator(
+    data_format='channels_last',
     rescale=1./255,
     horizontal_flip=True,
     # height_shift_range=.2,
@@ -94,25 +95,28 @@ augs_gen = ImageDataGenerator(
     validation_split=0.1
 )
 
+
+img_target_size = (862, 862)
+batch_size = 2 if in_mac_os() else 2
+
 train_gen = augs_gen.flow_from_directory(
-    data_dir,
-    target_size=(960,960),
-    batch_size=2,
+    train_dir,
+    target_size=img_target_size,
+    batch_size=batch_size,
     class_mode='categorical',
     shuffle=True,
 )
 
 valid_gen = augs_gen.flow_from_directory(
-    data_dir,
-    target_size=(960,960),
-    batch_size=2,
+    train_dir,
+    target_size=img_target_size,
+    batch_size=batch_size,
     class_mode='categorical',
     shuffle=False,
     subset='validation'
 )
 
-batch_size = 2 if in_mac_os() else 2
-n_epochs = 5 if in_mac_os() else 10
+n_epochs = 2 if in_mac_os() else 10
 
 print(f"\n************ Starting training for {n_epochs} epochs in "
       f"{'macOS' if in_mac_os() else 'Linux'}... ************\n")
@@ -133,12 +137,30 @@ if SAVE_LABEL_ENCODER:
     save_label_encoder(label_encoder, LABEL_ENCODER_FILENAME)
 
 NUM_VAL_BATCHES = 8
-validation_random_img_batch_generator = get_random_validation_fighter_images_as_pixel_values_generator(
-    num_batches=NUM_VAL_BATCHES)
-small_validation_sample_list = next(validation_random_img_batch_generator)
-validation_images = np.array([img for label, img in small_validation_sample_list])
-validation_labels = [label for label, img in small_validation_sample_list]
-validation_labels, _ = convert_labels_to_one_hot_vectors(validation_labels, encoder=label_encoder)
+# validation_random_img_batch_generator = get_random_validation_fighter_images_as_pixel_values_generator(
+#     num_batches=NUM_VAL_BATCHES)
+# small_validation_sample_list = next(validation_random_img_batch_generator)
+
+valid_dir = SIZE_1920_DIR + '/validation'
+
+test_img_gen = ImageDataGenerator(
+    data_format='channels_last',
+    rescale=1./255
+)
+
+test_gen = augs_gen.flow_from_directory(
+    valid_dir,
+    target_size=img_target_size,
+    batch_size=300,
+    class_mode='categorical',
+    shuffle=False
+)
+
+# validation_images = np.array([img for label, img in small_validation_sample_list])
+# validation_labels = [label for label, img in small_validation_sample_list]
+# validation_labels, _ = convert_labels_to_one_hot_vectors(validation_labels, encoder=label_encoder)
+
+validation_images, validation_labels = next(test_gen)
 predictions = jet_recognizer.predict(validation_images, flatten_output=False, one_hot=True)
 
 print_individual = False

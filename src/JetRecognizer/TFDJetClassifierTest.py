@@ -32,10 +32,10 @@ ONLY_SAMPLE = False
 JET_TYPES = [
     # FIGHTER_JET.F_14,
     # FIGHTER_JET.F_15,
-    # FIGHTER_JET.F_16,
-    # FIGHTER_JET.F_18,
+    FIGHTER_JET.F_16,
+    FIGHTER_JET.F_18,
     FIGHTER_JET.F_22,
-    # FIGHTER_JET.F_35
+    FIGHTER_JET.F_35
 ]
 print(f"Jet types: {JET_TYPES}")
 

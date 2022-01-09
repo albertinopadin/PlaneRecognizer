@@ -32,7 +32,7 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
 
             print(f'Input Shape: {input_shape}')
             layers = self.create_conv_layers(input_shape=input_shape, kernel_init=kernel_init)
-            conv_layer_input, conv_layer_2, conv_layer_3, conv_layer_4 = layers
+            conv_layer_input, conv_layer_2, conv_layer_3, conv_layer_4, conv_layer_5 = layers
 
             if n_output == 1:
                 output_layer = Dense(units=1, activation='sigmoid', name='output_layer_binary')
@@ -50,13 +50,13 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
                 MaxPool2D(pool_size=(2, 2)),
                 conv_layer_4,
                 MaxPool2D(pool_size=(2, 2)),
+                conv_layer_5,
+                MaxPool2D(pool_size=(2, 2)),
                 Flatten(),
-                Dense(units=256, activation='relu'),
-                Dropout(0.8),
-                Dense(units=128, activation='relu'),
-                Dropout(0.6),
                 Dense(units=64, activation='relu'),
-                Dropout(0.4),
+                Dropout(0.2),
+                Dense(units=64, activation='relu'),
+                Dropout(0.2),
                 Dense(units=32, activation='relu'),
                 Dropout(0.2),
                 output_layer
@@ -74,13 +74,13 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
             model.summary()
             return model
 
-    def create_conv2d(self, n_filters, kernel_size, stride, kernel_initializer, name, input_shape=None):
+    def create_conv2d(self, n_filters, kernel_size, stride, padding, kernel_initializer, name, input_shape=None):
         with tf.device('GPU:0'):
             if input_shape is None:
                 return Conv2D(filters=n_filters,
                               kernel_size=kernel_size,
                               strides=stride,
-                              padding='same',
+                              padding=padding,
                               activation='relu',
                               data_format='channels_last',
                               kernel_initializer=kernel_initializer,
@@ -90,7 +90,7 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
                               filters=n_filters,
                               kernel_size=kernel_size,
                               strides=stride,
-                              padding='same',
+                              padding=padding,
                               activation='relu',
                               data_format='channels_last',
                               kernel_initializer=kernel_initializer,
@@ -98,31 +98,42 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
 
     def create_conv_layers(self, input_shape, kernel_init):
         conv_layer_input = self.create_conv2d(input_shape=input_shape,
-                                              n_filters=64,
+                                              n_filters=32,
                                               kernel_size=(3, 3),
                                               stride=1,
+                                              padding='valid',
                                               kernel_initializer=kernel_init,
-                                              name='conv64_input_layer')
+                                              name='conv32_input_layer')  # (((862 - 3)/1) + 1)/2 -> 430, /2 is MaxPool
 
         conv_layer_2 = self.create_conv2d(n_filters=64,
-                                          kernel_size=(4, 4),
+                                          kernel_size=(3, 3),
                                           stride=1,
+                                          padding='valid',
                                           kernel_initializer=kernel_init,
-                                          name='conv64_k5_layer')
+                                          name='conv64_k3_layer')  # 430 -> 214
 
         conv_layer_3 = self.create_conv2d(n_filters=128,
                                           kernel_size=(3, 3),
-                                          stride=2,
+                                          stride=1,
+                                          padding='valid',
                                           kernel_initializer=kernel_init,
-                                          name='conv128_k3_layer')
+                                          name='conv128_k3_layer')  # 214 -> 106
 
         conv_layer_4 = self.create_conv2d(n_filters=256,
                                           kernel_size=(3, 3),
                                           stride=1,
+                                          padding='valid',
                                           kernel_initializer=kernel_init,
-                                          name='conv256_k3_layer')
+                                          name='conv256_k3_layer')  # 106 -> 52
 
-        return conv_layer_input, conv_layer_2, conv_layer_3, conv_layer_4
+        conv_layer_5 = self.create_conv2d(n_filters=512,
+                                          kernel_size=(3, 3),
+                                          stride=1,
+                                          padding='valid',
+                                          kernel_initializer=kernel_init,
+                                          name='conv512_k3_layer')  # 52 -> 25
+
+        return conv_layer_input, conv_layer_2, conv_layer_3, conv_layer_4, conv_layer_5
 
     def train(self,
               train_images,
