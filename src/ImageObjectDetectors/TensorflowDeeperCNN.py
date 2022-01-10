@@ -11,6 +11,7 @@ from Common.DL_FilePaths import PROJECT_ROOT
 physical_devices = tf.config.list_physical_devices('GPU')
 # physical_devices = tf.config.list_physical_devices()
 print(f"physical_devices: {physical_devices}")
+print(f"logical_device_configuration: {tf.config.get_logical_device_configuration(physical_devices[0])}")
 # gpu_device = physical_devices[0]
 # print(f"gpu_device: {gpu_device}")
 # tf.config.set_visible_devices(gpu_device, 'GPU')

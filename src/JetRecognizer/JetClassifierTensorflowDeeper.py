@@ -12,14 +12,17 @@ from ClassifierTestUtils import show_tensorflow_history, show_tensorflow_histori
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from Common.DL_FilePaths import SIZE_960_DIR, SIZE_1920_DIR
+from ImageGenerator import ImageGenerator
+import tensorflow as tf
 
 
+# tf.debugging.set_log_device_placement(True)
 INPUT_SHAPE = (862, 862, 3)
 N_OUTPUT = 6
 # LEARNING_RATE = 0.1 if in_mac_os() else 0.1
-# LEARNING_RATE = 0.03 if in_mac_os() else 0.03
+LEARNING_RATE = 0.03 if in_mac_os() else 0.03
 # LEARNING_RATE = 0.01 if in_mac_os() else 0.01  # Best starting learning rate
-LEARNING_RATE = 0.003 if in_mac_os() else 0.003
+# LEARNING_RATE = 0.003 if in_mac_os() else 0.003
 # LEARNING_RATE = 0.001 if in_mac_os() else 0.001
 # LEARNING_RATE = 0.0003 if in_mac_os() else 0.0003
 # LEARNING_RATE = 0.0001 if in_mac_os() else 0.0001
@@ -84,39 +87,56 @@ else:
 
 # From: https://medium.com/intelligentmachines/convolutional-neural-network-and-regularization-techniques-with-tensorflow-and-keras-5a09e6e65dc7
 
+# train_dir = SIZE_1920_DIR + '/train'
+# augs_gen = ImageDataGenerator(
+#     data_format='channels_last',
+#     rescale=1./255,
+#     horizontal_flip=True,
+#     # height_shift_range=.2,
+#     vertical_flip=True,
+#     validation_split=0.1
+# )
+#
+#
+# img_target_size = (862, 862)
+# batch_size = 2 if in_mac_os() else 2
+#
+# train_gen = augs_gen.flow_from_directory(
+#     train_dir,
+#     target_size=img_target_size,
+#     batch_size=batch_size,
+#     class_mode='categorical',
+#     shuffle=True,
+# )
+#
+# valid_gen = augs_gen.flow_from_directory(
+#     train_dir,
+#     target_size=img_target_size,
+#     batch_size=batch_size,
+#     class_mode='categorical',
+#     shuffle=False,
+#     subset='validation'
+# )
+
+
+img_target_size = (862, 862, 3)
+batch_size = 16 if in_mac_os() else 2
+
 train_dir = SIZE_1920_DIR + '/train'
+train_gen = ImageGenerator(train_dir,
+                           crop_size=img_target_size,
+                           batch_size=batch_size,
+                           label_encoder=label_encoder,
+                           one_hot_labels=True)
 
-augs_gen = ImageDataGenerator(
-    data_format='channels_last',
-    rescale=1./255,
-    horizontal_flip=True,
-    # height_shift_range=.2,
-    vertical_flip=True,
-    validation_split=0.1
-)
+valid_dir = SIZE_1920_DIR + '/validation'
+valid_gen = ImageGenerator(valid_dir,
+                           crop_size=img_target_size,
+                           batch_size=batch_size,
+                           label_encoder=label_encoder,
+                           one_hot_labels=True)
 
-
-img_target_size = (862, 862)
-batch_size = 2 if in_mac_os() else 2
-
-train_gen = augs_gen.flow_from_directory(
-    train_dir,
-    target_size=img_target_size,
-    batch_size=batch_size,
-    class_mode='categorical',
-    shuffle=True,
-)
-
-valid_gen = augs_gen.flow_from_directory(
-    train_dir,
-    target_size=img_target_size,
-    batch_size=batch_size,
-    class_mode='categorical',
-    shuffle=False,
-    subset='validation'
-)
-
-n_epochs = 2 if in_mac_os() else 10
+n_epochs = 10 if in_mac_os() else 10
 
 print(f"\n************ Starting training for {n_epochs} epochs in "
       f"{'macOS' if in_mac_os() else 'Linux'}... ************\n")
@@ -136,39 +156,36 @@ if SAVE_MODEL:
 if SAVE_LABEL_ENCODER:
     save_label_encoder(label_encoder, LABEL_ENCODER_FILENAME)
 
-NUM_VAL_BATCHES = 8
+# NUM_VAL_BATCHES = 8
 # validation_random_img_batch_generator = get_random_validation_fighter_images_as_pixel_values_generator(
 #     num_batches=NUM_VAL_BATCHES)
 # small_validation_sample_list = next(validation_random_img_batch_generator)
 
+
+def validate_model(jet_classifier, img_dir, target_size, test=False):
+    test_gen = ImageGenerator(img_dir,
+                              crop_size=target_size,
+                              batch_size=300,
+                              label_encoder=label_encoder,
+                              one_hot_labels=True)
+
+    validation_images, validation_labels = test_gen.__getitem__(0)
+    predictions = jet_classifier.predict(validation_images, flatten_output=False, one_hot=True)
+
+    print_individual = False
+    if print_individual:
+        print("Predictions vs. Ground Truth:")
+        for t_pred, t_label in zip(predictions, validation_labels):
+            print(f'Prediction: {t_pred}, Truth: {t_label}')
+
+    print(f"Predictions type: {type(predictions)}")
+    print(f"{'Test' if test else 'Validation'} labels type: {type(validation_labels)}")
+    print(f"Model accuracy in {'test' if test else 'validation'} set: "
+          f"{accuracy_score(validation_labels, predictions):0.4f}")
+
+
 valid_dir = SIZE_1920_DIR + '/validation'
+test_dir = SIZE_1920_DIR + '/test'
 
-test_img_gen = ImageDataGenerator(
-    data_format='channels_last',
-    rescale=1./255
-)
-
-test_gen = augs_gen.flow_from_directory(
-    valid_dir,
-    target_size=img_target_size,
-    batch_size=300,
-    class_mode='categorical',
-    shuffle=False
-)
-
-# validation_images = np.array([img for label, img in small_validation_sample_list])
-# validation_labels = [label for label, img in small_validation_sample_list]
-# validation_labels, _ = convert_labels_to_one_hot_vectors(validation_labels, encoder=label_encoder)
-
-validation_images, validation_labels = next(test_gen)
-predictions = jet_recognizer.predict(validation_images, flatten_output=False, one_hot=True)
-
-print_individual = False
-if print_individual:
-    print("Predictions vs. Ground Truth:")
-    for t_pred, t_label in zip(predictions, validation_labels):
-        print(f'Prediction: {t_pred}, Truth: {t_label}')
-
-print(f"Predictions type: {type(predictions)}")
-print(f"Validation labels type: {type(validation_labels)}")
-print(f"Model accuracy in validation set: {accuracy_score(validation_labels, predictions):0.4f}")
+validate_model(jet_recognizer, valid_dir, img_target_size)
+validate_model(jet_recognizer, test_dir, img_target_size, test=True)

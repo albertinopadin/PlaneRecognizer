@@ -244,11 +244,12 @@ def load_random_cropped_normalized_images_in_dir_generator(directory, crop_size,
 def convert_labels_to_one_hot_vectors(labels, encoder=None):
     label_encoder = LabelEncoder() if encoder is None else encoder
     # print(f'label_encoder params: {label_encoder.get_params()}')
-    encoder_fit = label_encoder.fit_transform(labels)
+    # encoder_fit = label_encoder.fit_transform(labels)
+    encoder_tfm = label_encoder.transform(labels)
     # print(f'encoder_fit: {encoder_fit}')
-    integer_encoded_labels = np.array(encoder_fit)
+    integer_encoded_labels = np.array(encoder_tfm)
     # print(f'integer_encoded_labels: {integer_encoded_labels}')
-    return to_categorical(integer_encoded_labels), label_encoder
+    return to_categorical(integer_encoded_labels, num_classes=6), label_encoder
 
 
 def save_label_encoder(encoder, filename, base_dir='models'):
