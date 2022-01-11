@@ -20,10 +20,10 @@ import tensorflow as tf
 INPUT_SHAPE = (862, 862, 3)
 N_OUTPUT = 6
 # LEARNING_RATE = 0.1 if in_mac_os() else 0.1
-LEARNING_RATE = 0.03 if in_mac_os() else 0.03
+# LEARNING_RATE = 0.03 if in_mac_os() else 0.03
 # LEARNING_RATE = 0.01 if in_mac_os() else 0.01  # Best starting learning rate
 # LEARNING_RATE = 0.003 if in_mac_os() else 0.003
-# LEARNING_RATE = 0.001 if in_mac_os() else 0.001
+LEARNING_RATE = 0.001 if in_mac_os() else 0.001
 # LEARNING_RATE = 0.0003 if in_mac_os() else 0.0003
 # LEARNING_RATE = 0.0001 if in_mac_os() else 0.0001
 
@@ -120,7 +120,7 @@ else:
 
 
 img_target_size = (862, 862, 3)
-batch_size = 16 if in_mac_os() else 2
+batch_size = 8 if in_mac_os() else 8
 
 train_dir = SIZE_1920_DIR + '/train'
 train_gen = ImageGenerator(train_dir,
@@ -136,7 +136,7 @@ valid_gen = ImageGenerator(valid_dir,
                            label_encoder=label_encoder,
                            one_hot_labels=True)
 
-n_epochs = 10 if in_mac_os() else 10
+n_epochs = 30 if in_mac_os() else 30
 
 print(f"\n************ Starting training for {n_epochs} epochs in "
       f"{'macOS' if in_mac_os() else 'Linux'}... ************\n")

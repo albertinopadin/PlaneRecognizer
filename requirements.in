@@ -1,5 +1,6 @@
 fastai
 matplotlib
+numba
 numpy
 pandas
 scikit-learn

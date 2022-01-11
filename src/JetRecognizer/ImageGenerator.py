@@ -36,9 +36,8 @@ def load_random_cropped_normalized_images_w_labels_in_dir_generator(directory, c
     def random_cropped_normalized_gen():
         for img, label in load_img_generator:
             normalized = normalize_pixels_in_img_obj(img)
-            # print(f'normalized shape: {normalized.shape}')
-            x,y,_ = normalized.shape
-            crop_w, crop_h = crop_size[0], crop_size[1]
+            x, y, _ = normalized.shape
+            crop_w, crop_h, _ = crop_size
             if x < crop_w or y < crop_h:
                 normalized_cropped = tf.image.resize_with_crop_or_pad(normalized, crop_w, crop_h)
             else:
@@ -75,7 +74,7 @@ class ImageGenerator(Sequence):
                 img, label = next(self._generator)
                 batch_imgs.append(img)
                 batch_labels.append(label)
-            except StopIteration as e:
+            except StopIteration:
                 break
 
         with tf.device('GPU:0'):

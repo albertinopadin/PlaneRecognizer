@@ -55,11 +55,11 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
                 MaxPool2D(pool_size=(2, 2)),
                 Flatten(),
                 Dense(units=64, activation='relu'),
-                Dropout(0.2),
+                Dropout(0.5),
                 Dense(units=64, activation='relu'),
-                Dropout(0.2),
+                Dropout(0.5),
                 Dense(units=32, activation='relu'),
-                Dropout(0.2),
+                Dropout(0.5),
                 output_layer
             ], name='ImageCNN_TF')
 
