@@ -9,11 +9,9 @@ from Common.Platforms import in_mac_os
 from ImageObjectDetectors.TensorflowDeeperCNN import TensorflowDeeperCNN
 from sklearn.metrics import accuracy_score
 from ClassifierTestUtils import show_tensorflow_history, show_tensorflow_histories
-from tensorflow.keras.preprocessing import image
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from Common.DL_FilePaths import SIZE_960_DIR, SIZE_1920_DIR
 from ImageGenerator import ImageGenerator
-import tensorflow as tf
 
 
 # tf.debugging.set_log_device_placement(True)
@@ -21,9 +19,9 @@ INPUT_SHAPE = (862, 862, 3)
 N_OUTPUT = 6
 # LEARNING_RATE = 0.1 if in_mac_os() else 0.1
 # LEARNING_RATE = 0.03 if in_mac_os() else 0.03
-# LEARNING_RATE = 0.01 if in_mac_os() else 0.01  # Best starting learning rate
+LEARNING_RATE = 0.01 if in_mac_os() else 0.01  # Best starting learning rate
 # LEARNING_RATE = 0.003 if in_mac_os() else 0.003
-LEARNING_RATE = 0.001 if in_mac_os() else 0.001
+# LEARNING_RATE = 0.001 if in_mac_os() else 0.001
 # LEARNING_RATE = 0.0003 if in_mac_os() else 0.0003
 # LEARNING_RATE = 0.0001 if in_mac_os() else 0.0001
 
@@ -44,7 +42,7 @@ LOAD_EXISTING_LABEL_ENCODER = True
 # Set to save the label encoder:
 SAVE_LABEL_ENCODER = True if in_mac_os() else True
 
-jet_recognizer = TensorflowDeeperCNN(INPUT_SHAPE, N_OUTPUT, LEARNING_RATE)
+jet_recognizer = TensorflowDeeperCNN(INPUT_SHAPE, N_OUTPUT, LEARNING_RATE, activation='swish')
 
 if LOAD_EXISTING_MODEL:
     jet_recognizer.load_model(JET_RECOGNIZER_MODEL_FILENAME)
@@ -136,7 +134,7 @@ valid_gen = ImageGenerator(valid_dir,
                            label_encoder=label_encoder,
                            one_hot_labels=True)
 
-n_epochs = 30 if in_mac_os() else 30
+n_epochs = 20 if in_mac_os() else 30
 
 print(f"\n************ Starting training for {n_epochs} epochs in "
       f"{'macOS' if in_mac_os() else 'Linux'}... ************\n")
@@ -148,13 +146,13 @@ print(
     f"\n************ Training {n_epochs} epochs took {int(_elapsed / 60)} minutes "
     f"{int(_elapsed % 60)} seconds). ************\n")
 
-show_tensorflow_history(history)
-
 if SAVE_MODEL:
     jet_recognizer.save_model(JET_RECOGNIZER_MODEL_FILENAME)
 
 if SAVE_LABEL_ENCODER:
     save_label_encoder(label_encoder, LABEL_ENCODER_FILENAME)
+
+show_tensorflow_history(history)
 
 # NUM_VAL_BATCHES = 8
 # validation_random_img_batch_generator = get_random_validation_fighter_images_as_pixel_values_generator(
@@ -163,9 +161,10 @@ if SAVE_LABEL_ENCODER:
 
 
 def validate_model(jet_classifier, img_dir, target_size, test=False):
+    print(f"{'Testing' if test else 'Validating'} model with images from directory: {img_dir} ...")
     test_gen = ImageGenerator(img_dir,
                               crop_size=target_size,
-                              batch_size=300,
+                              batch_size=200,
                               label_encoder=label_encoder,
                               one_hot_labels=True)
 

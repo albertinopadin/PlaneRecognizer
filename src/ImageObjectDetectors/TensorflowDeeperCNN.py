@@ -6,14 +6,15 @@ from tensorflow.keras.models import load_model
 from Common import test_training_utils as ttu
 from ImageObjectDetectors.CNN4ImagesBase import CNN4ImagesBase
 from Common.DL_FilePaths import PROJECT_ROOT
+from tensorflow.keras.utils import get_custom_objects
+from Activations.Mish import mish
+
 
 # tf.config.set_soft_device_placement(True)
 physical_devices = tf.config.list_physical_devices('GPU')
 # physical_devices = tf.config.list_physical_devices()
 print(f"physical_devices: {physical_devices}")
-print(f"logical_device_configuration: {tf.config.get_logical_device_configuration(physical_devices[0])}")
-# gpu_device = physical_devices[0]
-# print(f"gpu_device: {gpu_device}")
+# print(f"logical_device_configuration: {tf.config.get_logical_device_configuration(physical_devices[0])}")
 # tf.config.set_visible_devices(gpu_device, 'GPU')
 
 
@@ -22,17 +23,23 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
                  input_shape,
                  n_output,
                  learning_rate=CNN4ImagesBase.DEFAULT_LEARNING_RATE,
+                 activation='relu',
                  default_seed=CNN4ImagesBase.DEFAULT_SEED):
-        self.n_output = n_output
-        self.model = self.construct_model(input_shape, n_output, learning_rate, default_seed)
+        if activation == 'mish':
+            # Add mish activation function:
+            get_custom_objects().update({'mish': mish})
 
-    def construct_model(self, input_shape, n_output, learning_rate, default_seed):
+        self.n_output = n_output
+        self.activation = activation
+        self.model = self.construct_model(input_shape, n_output, learning_rate, activation, default_seed)
+
+    def construct_model(self, input_shape, n_output, learning_rate, activation, default_seed):
         print(f'TF Keras backend: {tf.keras.backend}')
-        with tf.device('GPU:0'):
+        with tf.device('/GPU:0'):
             kernel_init = tf.keras.initializers.glorot_uniform(seed=default_seed)
 
             print(f'Input Shape: {input_shape}')
-            layers = self.create_conv_layers(input_shape=input_shape, kernel_init=kernel_init)
+            layers = self.create_conv_layers(input_shape=input_shape, kernel_init=kernel_init, activation=activation)
             conv_layer_input, conv_layer_2, conv_layer_3, conv_layer_4, conv_layer_5 = layers
 
             if n_output == 1:
@@ -54,11 +61,11 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
                 conv_layer_5,
                 MaxPool2D(pool_size=(2, 2)),
                 Flatten(),
-                Dense(units=64, activation='relu'),
+                Dense(units=64, activation=activation),
                 Dropout(0.5),
-                Dense(units=64, activation='relu'),
+                Dense(units=64, activation=activation),
                 Dropout(0.5),
-                Dense(units=32, activation='relu'),
+                Dense(units=32, activation=activation),
                 Dropout(0.5),
                 output_layer
             ], name='ImageCNN_TF')
@@ -75,14 +82,14 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
             model.summary()
             return model
 
-    def create_conv2d(self, n_filters, kernel_size, stride, padding, kernel_initializer, name, input_shape=None):
-        with tf.device('GPU:0'):
+    def create_conv2d(self, n_filters, kernel_size, stride, padding, activation, kernel_initializer, name, input_shape=None):
+        with tf.device('/GPU:0'):
             if input_shape is None:
                 return Conv2D(filters=n_filters,
                               kernel_size=kernel_size,
                               strides=stride,
                               padding=padding,
-                              activation='relu',
+                              activation=activation,
                               data_format='channels_last',
                               kernel_initializer=kernel_initializer,
                               name=name)
@@ -92,17 +99,18 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
                               kernel_size=kernel_size,
                               strides=stride,
                               padding=padding,
-                              activation='relu',
+                              activation=activation,
                               data_format='channels_last',
                               kernel_initializer=kernel_initializer,
                               name=name)
 
-    def create_conv_layers(self, input_shape, kernel_init):
+    def create_conv_layers(self, input_shape, kernel_init, activation):
         conv_layer_input = self.create_conv2d(input_shape=input_shape,
                                               n_filters=32,
                                               kernel_size=(3, 3),
                                               stride=1,
                                               padding='valid',
+                                              activation=activation,
                                               kernel_initializer=kernel_init,
                                               name='conv32_input_layer')  # (((862 - 3)/1) + 1)/2 -> 430, /2 is MaxPool
 
@@ -110,6 +118,7 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
                                           kernel_size=(3, 3),
                                           stride=1,
                                           padding='valid',
+                                          activation=activation,
                                           kernel_initializer=kernel_init,
                                           name='conv64_k3_layer')  # 430 -> 214
 
@@ -117,6 +126,7 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
                                           kernel_size=(3, 3),
                                           stride=1,
                                           padding='valid',
+                                          activation=activation,
                                           kernel_initializer=kernel_init,
                                           name='conv128_k3_layer')  # 214 -> 106
 
@@ -124,6 +134,7 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
                                           kernel_size=(3, 3),
                                           stride=1,
                                           padding='valid',
+                                          activation=activation,
                                           kernel_initializer=kernel_init,
                                           name='conv256_k3_layer')  # 106 -> 52
 
@@ -131,6 +142,7 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
                                           kernel_size=(3, 3),
                                           stride=1,
                                           padding='valid',
+                                          activation=activation,
                                           kernel_initializer=kernel_init,
                                           name='conv512_k3_layer')  # 52 -> 25
 
@@ -145,7 +157,7 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
         X_train, X_val, y_train, y_val = ttu.split_train_validation_data(train_images,
                                                                          train_labels,
                                                                          train_validation_split)
-        with tf.device('GPU:0'):
+        with tf.device('/GPU:0'):
             history = self.model.fit(x=X_train,
                                      y=y_train,
                                      epochs=n_epochs,
@@ -158,7 +170,7 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
         return history
 
     def train_all(self, train_gen, valid_gen, n_epochs, batch_size):
-        with tf.device('GPU:0'):
+        with tf.device('/GPU:0'):
             history = self.model.fit(train_gen,
                                      epochs=n_epochs,
                                      batch_size=batch_size,
@@ -181,7 +193,7 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
         return predictions
 
     def get_full_model_filename(self, model_filename):
-        model_filename += '_tf_d'  # Specify using Tensorflow
+        model_filename += f'_tf_d_{self.activation}'  # Specify using Tensorflow
         return model_filename
 
     def save_model(self, model_filename, rel_path='models'):

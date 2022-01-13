@@ -1,6 +1,5 @@
 import os
 import numpy as np
-from numba import jit
 import tensorflow as tf
 from PIL import Image, ImageOps
 from os.path import isfile, join
@@ -18,7 +17,6 @@ NUM_CPUS = cpu_count()
 NUM_THREADS = 4
 
 
-@jit(nopython=True)
 def get_file_paths_in_dir(directory, exclude_subfolders=True):
     if exclude_subfolders:
         return [f'{directory}/{fn}' for fn in os.listdir(directory) if isfile(join(directory, fn))]
