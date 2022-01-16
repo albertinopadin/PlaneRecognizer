@@ -15,14 +15,15 @@ from tensorflow import keras
 #     #     inputs_t = tf.constant(inputs)
 #     return tf.math.multiply(inputs, tf.math.tanh(tf.math.softplus(inputs)))
 
+# @tf.function(jit_compile=True)  # UNIMPLEMENTED: Could not find compiler for platform METAL
 @tf.function
 def mish(inputs):
     return inputs * tf.math.tanh(tf.math.softplus(inputs))
     # inputs = tf.convert_to_tensor(inputs)
     # with tf.device('/GPU:0'):
     #     return inputs * tf.math.tanh(tf.math.softplus(inputs))
-        # return tf.math.multiply(inputs, tf.math.tanh(tf.math.softplus(inputs)))
-        # sp = tf.math.softplus(inputs)
-        # tan_h = tf.math.tanh(sp)
-        # return inputs * tan_h
-        # return keras.layers.Lambda(lambda inputs: inputs * K.tanh(K.softplus(inputs)))(inputs)
+    # return tf.math.multiply(inputs, tf.math.tanh(tf.math.softplus(inputs)))
+    # sp = tf.math.softplus(inputs)
+    # tan_h = tf.math.tanh(sp)
+    # return inputs * tan_h
+    # return keras.layers.Lambda(lambda inputs: inputs * K.tanh(K.softplus(inputs)))(inputs)

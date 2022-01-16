@@ -139,4 +139,5 @@ dmypy.json
 **_tf_d.h5
 **_tf_d_mish.h5
 **_tf_d_swish.h5
+**_tf_d_swish_1a.h5
 **_tf_d_Mish_not_loading.h5

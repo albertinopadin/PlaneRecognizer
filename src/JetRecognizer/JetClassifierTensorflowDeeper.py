@@ -11,7 +11,7 @@ from sklearn.metrics import accuracy_score
 from ClassifierTestUtils import show_tensorflow_history, show_tensorflow_histories
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from Common.DL_FilePaths import SIZE_960_DIR, SIZE_1920_DIR
-from ImageGenerator import ImageGenerator
+from ImageGenerator import ImageGenerator, ImageDatasetLoader
 
 
 # tf.debugging.set_log_device_placement(True)
@@ -19,8 +19,8 @@ INPUT_SHAPE = (862, 862, 3)
 N_OUTPUT = 6
 # LEARNING_RATE = 0.1 if in_mac_os() else 0.1
 # LEARNING_RATE = 0.03 if in_mac_os() else 0.03
-LEARNING_RATE = 0.01 if in_mac_os() else 0.01  # Best starting learning rate
-# LEARNING_RATE = 0.003 if in_mac_os() else 0.003
+# LEARNING_RATE = 0.01 if in_mac_os() else 0.01  # Best starting learning rate
+LEARNING_RATE = 0.003 if in_mac_os() else 0.003
 # LEARNING_RATE = 0.001 if in_mac_os() else 0.001
 # LEARNING_RATE = 0.0003 if in_mac_os() else 0.0003
 # LEARNING_RATE = 0.0001 if in_mac_os() else 0.0001
@@ -42,7 +42,7 @@ LOAD_EXISTING_LABEL_ENCODER = True
 # Set to save the label encoder:
 SAVE_LABEL_ENCODER = True if in_mac_os() else True
 
-jet_recognizer = TensorflowDeeperCNN(INPUT_SHAPE, N_OUTPUT, LEARNING_RATE, activation='swish')
+jet_recognizer = TensorflowDeeperCNN(INPUT_SHAPE, N_OUTPUT, LEARNING_RATE, activation='mish')
 
 if LOAD_EXISTING_MODEL:
     jet_recognizer.load_model(JET_RECOGNIZER_MODEL_FILENAME)
@@ -83,63 +83,42 @@ else:
 #
 # show_tensorflow_histories(histories)
 
-# From: https://medium.com/intelligentmachines/convolutional-neural-network-and-regularization-techniques-with-tensorflow-and-keras-5a09e6e65dc7
-
-# train_dir = SIZE_1920_DIR + '/train'
-# augs_gen = ImageDataGenerator(
-#     data_format='channels_last',
-#     rescale=1./255,
-#     horizontal_flip=True,
-#     # height_shift_range=.2,
-#     vertical_flip=True,
-#     validation_split=0.1
-# )
-#
-#
-# img_target_size = (862, 862)
-# batch_size = 2 if in_mac_os() else 2
-#
-# train_gen = augs_gen.flow_from_directory(
-#     train_dir,
-#     target_size=img_target_size,
-#     batch_size=batch_size,
-#     class_mode='categorical',
-#     shuffle=True,
-# )
-#
-# valid_gen = augs_gen.flow_from_directory(
-#     train_dir,
-#     target_size=img_target_size,
-#     batch_size=batch_size,
-#     class_mode='categorical',
-#     shuffle=False,
-#     subset='validation'
-# )
-
-
 img_target_size = (862, 862, 3)
 batch_size = 8 if in_mac_os() else 8
 
 train_dir = SIZE_1920_DIR + '/train'
-train_gen = ImageGenerator(train_dir,
-                           crop_size=img_target_size,
-                           batch_size=batch_size,
-                           label_encoder=label_encoder,
-                           one_hot_labels=True)
+# train_gen = ImageGenerator(train_dir,
+#                            crop_size=img_target_size,
+#                            batch_size=batch_size,
+#                            label_encoder=label_encoder,
+#                            one_hot_labels=True)
+#
+# valid_dir = SIZE_1920_DIR + '/validation'
+# valid_gen = ImageGenerator(valid_dir,
+#                            crop_size=img_target_size,
+#                            batch_size=batch_size,
+#                            label_encoder=label_encoder,
+#                            one_hot_labels=True)
+
+train_dsl = ImageDatasetLoader(train_dir,
+                               crop_size=img_target_size,
+                               batch_size=batch_size,
+                               label_encoder=label_encoder,
+                               one_hot_labels=True)
 
 valid_dir = SIZE_1920_DIR + '/validation'
-valid_gen = ImageGenerator(valid_dir,
-                           crop_size=img_target_size,
-                           batch_size=batch_size,
-                           label_encoder=label_encoder,
-                           one_hot_labels=True)
+valid_dsl = ImageDatasetLoader(valid_dir,
+                               crop_size=img_target_size,
+                               batch_size=batch_size,
+                               label_encoder=label_encoder,
+                               one_hot_labels=True)
 
-n_epochs = 20 if in_mac_os() else 30
+n_epochs = 5 if in_mac_os() else 30
 
 print(f"\n************ Starting training for {n_epochs} epochs in "
       f"{'macOS' if in_mac_os() else 'Linux'}... ************\n")
 _start = perf_counter()
-history = jet_recognizer.train_all(train_gen=train_gen, valid_gen=valid_gen, n_epochs=n_epochs, batch_size=batch_size)
+history = jet_recognizer.train_all(train_gen=train_dsl.dataset, valid_gen=valid_dsl.dataset, n_epochs=n_epochs, batch_size=batch_size)
 _end = perf_counter()
 _elapsed = _end - _start
 print(

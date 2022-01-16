@@ -29,6 +29,11 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
             # Add mish activation function:
             get_custom_objects().update({'mish': mish})
 
+        # Can't use in mac...
+        # Use mixed precision:
+        # policy = tf.keras.mixed_precision.Policy('mixed_float16')
+        # tf.keras.mixed_precision.set_policy(policy)
+
         self.n_output = n_output
         self.activation = activation
         self.model = self.construct_model(input_shape, n_output, learning_rate, activation, default_seed)
