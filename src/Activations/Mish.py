@@ -16,7 +16,7 @@ from tensorflow import keras
 #     return tf.math.multiply(inputs, tf.math.tanh(tf.math.softplus(inputs)))
 
 # @tf.function(jit_compile=True)  # UNIMPLEMENTED: Could not find compiler for platform METAL
-@tf.function
+# @tf.function
 def mish(inputs):
     return inputs * tf.math.tanh(tf.math.softplus(inputs))
     # inputs = tf.convert_to_tensor(inputs)

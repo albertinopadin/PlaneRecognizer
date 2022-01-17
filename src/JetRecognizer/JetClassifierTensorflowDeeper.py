@@ -11,16 +11,17 @@ from sklearn.metrics import accuracy_score
 from ClassifierTestUtils import show_tensorflow_history, show_tensorflow_histories
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from Common.DL_FilePaths import SIZE_960_DIR, SIZE_1920_DIR
-from ImageGenerator import ImageGenerator, ImageDatasetLoader
+from ImageGenerator import ImageGenerator
+from ImageDatasetLoader import ImageDatasetLoader
 
 
 # tf.debugging.set_log_device_placement(True)
 INPUT_SHAPE = (862, 862, 3)
 N_OUTPUT = 6
 # LEARNING_RATE = 0.1 if in_mac_os() else 0.1
-# LEARNING_RATE = 0.03 if in_mac_os() else 0.03
+LEARNING_RATE = 0.03 if in_mac_os() else 0.03
 # LEARNING_RATE = 0.01 if in_mac_os() else 0.01  # Best starting learning rate
-LEARNING_RATE = 0.003 if in_mac_os() else 0.003
+# LEARNING_RATE = 0.003 if in_mac_os() else 0.003
 # LEARNING_RATE = 0.001 if in_mac_os() else 0.001
 # LEARNING_RATE = 0.0003 if in_mac_os() else 0.0003
 # LEARNING_RATE = 0.0001 if in_mac_os() else 0.0001
@@ -42,7 +43,7 @@ LOAD_EXISTING_LABEL_ENCODER = True
 # Set to save the label encoder:
 SAVE_LABEL_ENCODER = True if in_mac_os() else True
 
-jet_recognizer = TensorflowDeeperCNN(INPUT_SHAPE, N_OUTPUT, LEARNING_RATE, activation='mish')
+jet_recognizer = TensorflowDeeperCNN(INPUT_SHAPE, N_OUTPUT, LEARNING_RATE, activation='swish')
 
 if LOAD_EXISTING_MODEL:
     jet_recognizer.load_model(JET_RECOGNIZER_MODEL_FILENAME)
@@ -113,12 +114,15 @@ valid_dsl = ImageDatasetLoader(valid_dir,
                                label_encoder=label_encoder,
                                one_hot_labels=True)
 
-n_epochs = 5 if in_mac_os() else 30
+n_epochs = 2 if in_mac_os() else 30
 
 print(f"\n************ Starting training for {n_epochs} epochs in "
       f"{'macOS' if in_mac_os() else 'Linux'}... ************\n")
 _start = perf_counter()
-history = jet_recognizer.train_all(train_gen=train_dsl.dataset, valid_gen=valid_dsl.dataset, n_epochs=n_epochs, batch_size=batch_size)
+history = jet_recognizer.train_all(train_gen=train_dsl.dataset,
+                                   valid_gen=valid_dsl.dataset,
+                                   n_epochs=n_epochs,
+                                   batch_size=batch_size)
 _end = perf_counter()
 _elapsed = _end - _start
 print(
@@ -141,13 +145,13 @@ show_tensorflow_history(history)
 
 def validate_model(jet_classifier, img_dir, target_size, test=False):
     print(f"{'Testing' if test else 'Validating'} model with images from directory: {img_dir} ...")
-    test_gen = ImageGenerator(img_dir,
-                              crop_size=target_size,
-                              batch_size=200,
-                              label_encoder=label_encoder,
-                              one_hot_labels=True)
+    test_dsl = ImageDatasetLoader(img_dir,
+                                  crop_size=target_size,
+                                  batch_size=200,
+                                  label_encoder=label_encoder,
+                                  one_hot_labels=True)
 
-    validation_images, validation_labels = test_gen.__getitem__(0)
+    validation_images, validation_labels = next(iter(test_dsl.dataset))
     predictions = jet_classifier.predict(validation_images, flatten_output=False, one_hot=True)
 
     print_individual = False
