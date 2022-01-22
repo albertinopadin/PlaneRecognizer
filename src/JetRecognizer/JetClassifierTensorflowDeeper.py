@@ -16,21 +16,31 @@ from ImageDatasetLoader import ImageDatasetLoader
 
 
 # tf.debugging.set_log_device_placement(True)
+
 INPUT_SHAPE = (862, 862, 3)
-N_OUTPUT = 6
-# LEARNING_RATE = 0.1 if in_mac_os() else 0.1
-LEARNING_RATE = 0.03 if in_mac_os() else 0.03
-# LEARNING_RATE = 0.01 if in_mac_os() else 0.01  # Best starting learning rate
-# LEARNING_RATE = 0.003 if in_mac_os() else 0.003
-# LEARNING_RATE = 0.001 if in_mac_os() else 0.001
-# LEARNING_RATE = 0.0003 if in_mac_os() else 0.0003
-# LEARNING_RATE = 0.0001 if in_mac_os() else 0.0001
 
 if in_mac_os():
     JET_RECOGNIZER_MODEL_FILENAME = 'jet_recognizer_apple_silicon_' + str(INPUT_SHAPE[0])
     print('In macOS!')
 else:
     JET_RECOGNIZER_MODEL_FILENAME = 'jet_recognizer_A6000_' + str(INPUT_SHAPE[0])
+
+N_OUTPUT = 6
+
+# LEARNING_RATE = 0.1 if in_mac_os() else 0.1
+# LEARNING_RATE = 0.03 if in_mac_os() else 0.03
+# LEARNING_RATE = 0.01 if in_mac_os() else 0.01  # Best starting learning rate
+# LEARNING_RATE = 0.003 if in_mac_os() else 0.003
+# LEARNING_RATE = 0.001 if in_mac_os() else 0.001
+# LEARNING_RATE = 0.0003 if in_mac_os() else 0.0003
+LEARNING_RATE = 0.0001 if in_mac_os() else 0.0001  # Good starting for Adam
+# LEARNING_RATE = 0.00001 if in_mac_os() else 0.00001
+# LEARNING_RATE = 0.000001 if in_mac_os() else 0.000001
+# LEARNING_RATE = 0.0000001 if in_mac_os() else 0.0000001
+
+DROPOUT = 0.5
+OPTIM = 'adam'
+ACTIVATION = 'mish'
 
 # Set the following flag to load a saved model:
 LOAD_EXISTING_MODEL = True if in_mac_os() else False
@@ -43,10 +53,18 @@ LOAD_EXISTING_LABEL_ENCODER = True
 # Set to save the label encoder:
 SAVE_LABEL_ENCODER = True if in_mac_os() else True
 
-jet_recognizer = TensorflowDeeperCNN(INPUT_SHAPE, N_OUTPUT, LEARNING_RATE, activation='swish')
+USING_CHECKPOINTS = True
+
+jet_recognizer = TensorflowDeeperCNN(INPUT_SHAPE,
+                                     N_OUTPUT,
+                                     LEARNING_RATE,
+                                     activation=ACTIVATION,
+                                     dropout=DROPOUT,
+                                     optimizer=OPTIM,
+                                     filename=JET_RECOGNIZER_MODEL_FILENAME)
 
 if LOAD_EXISTING_MODEL:
-    jet_recognizer.load_model(JET_RECOGNIZER_MODEL_FILENAME)
+    jet_recognizer.load_model(JET_RECOGNIZER_MODEL_FILENAME, is_checkpoint=USING_CHECKPOINTS)
 
 if LOAD_EXISTING_LABEL_ENCODER:
     label_encoder = load_label_encoder(LABEL_ENCODER_FILENAME)
@@ -112,9 +130,10 @@ valid_dsl = ImageDatasetLoader(valid_dir,
                                crop_size=img_target_size,
                                batch_size=batch_size,
                                label_encoder=label_encoder,
-                               one_hot_labels=True)
+                               one_hot_labels=True,
+                               validation=True)
 
-n_epochs = 2 if in_mac_os() else 30
+n_epochs = 3 if in_mac_os() else 30
 
 print(f"\n************ Starting training for {n_epochs} epochs in "
       f"{'macOS' if in_mac_os() else 'Linux'}... ************\n")
@@ -130,7 +149,7 @@ print(
     f"{int(_elapsed % 60)} seconds). ************\n")
 
 if SAVE_MODEL:
-    jet_recognizer.save_model(JET_RECOGNIZER_MODEL_FILENAME)
+    jet_recognizer.save_model(JET_RECOGNIZER_MODEL_FILENAME, using_checkpoints=USING_CHECKPOINTS)
 
 if SAVE_LABEL_ENCODER:
     save_label_encoder(label_encoder, LABEL_ENCODER_FILENAME)
@@ -149,7 +168,8 @@ def validate_model(jet_classifier, img_dir, target_size, test=False):
                                   crop_size=target_size,
                                   batch_size=200,
                                   label_encoder=label_encoder,
-                                  one_hot_labels=True)
+                                  one_hot_labels=True,
+                                  validation=True)
 
     validation_images, validation_labels = next(iter(test_dsl.dataset))
     predictions = jet_classifier.predict(validation_images, flatten_output=False, one_hot=True)

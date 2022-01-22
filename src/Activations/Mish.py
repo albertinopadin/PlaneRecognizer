@@ -18,6 +18,9 @@ from tensorflow import keras
 # @tf.function(jit_compile=True)  # UNIMPLEMENTED: Could not find compiler for platform METAL
 # @tf.function
 def mish(inputs):
+    # _inputs = tf.cast(inputs, tf.float16)
+    # _outputs = _inputs * tf.math.tanh(tf.math.softplus(_inputs))
+    # return tf.cast(_outputs, tf.float32)
     return inputs * tf.math.tanh(tf.math.softplus(inputs))
     # inputs = tf.convert_to_tensor(inputs)
     # with tf.device('/GPU:0'):

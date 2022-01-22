@@ -3,6 +3,7 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPool2D, Dense, Flatten, Dropout
 from tensorflow.keras.models import load_model
+from tensorflow.keras.callbacks import ModelCheckpoint
 from Common import test_training_utils as ttu
 from ImageObjectDetectors.CNN4ImagesBase import CNN4ImagesBase
 from Common.DL_FilePaths import PROJECT_ROOT
@@ -24,7 +25,10 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
                  n_output,
                  learning_rate=CNN4ImagesBase.DEFAULT_LEARNING_RATE,
                  activation='relu',
-                 default_seed=CNN4ImagesBase.DEFAULT_SEED):
+                 dropout=0.5,
+                 optimizer='sgd',
+                 default_seed=CNN4ImagesBase.DEFAULT_SEED,
+                 filename='tensorflow_deeper'):
         if activation == 'mish':
             # Add mish activation function:
             get_custom_objects().update({'mish': mish})
@@ -36,9 +40,21 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
 
         self.n_output = n_output
         self.activation = activation
-        self.model = self.construct_model(input_shape, n_output, learning_rate, activation, default_seed)
+        self.dropout = dropout
+        self._optimizer = optimizer
+        model_fn = self.get_full_model_filepath(model_filename=filename)
+        self.checkpoint_callback = ModelCheckpoint(
+            # filepath=f'{PROJECT_ROOT}/models/checkpoint_{model_fn}',
+            filepath=f'{PROJECT_ROOT}/models/{model_fn}',
+            save_weights_only=False,
+            monitor='val_accuracy',
+            mode='max',
+            save_best_only=True,
+            verbose=1
+        )
+        self.model = self.construct_model(input_shape, n_output, learning_rate, activation, dropout, default_seed)
 
-    def construct_model(self, input_shape, n_output, learning_rate, activation, default_seed):
+    def construct_model(self, input_shape, n_output, learning_rate, activation, dropout, default_seed):
         print(f'TF Keras backend: {tf.keras.backend}')
         with tf.device('/GPU:0'):
             kernel_init = tf.keras.initializers.glorot_uniform(seed=default_seed)
@@ -67,23 +83,27 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
                 MaxPool2D(pool_size=(2, 2)),
                 Flatten(),
                 Dense(units=64, activation=activation),
-                Dropout(0.5),
+                Dropout(dropout),
                 Dense(units=64, activation=activation),
-                Dropout(0.5),
+                Dropout(dropout),
                 Dense(units=32, activation=activation),
-                Dropout(0.5),
+                Dropout(dropout),
                 output_layer
             ], name='ImageCNN_TF')
 
-            # optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate, amsgrad=True)
-            # model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
-            # model.compile(loss=loss, metrics=['accuracy'])  # Works on Apple Silicon, but model doesn't learn
-            # model.compile(optimizer='nadam', loss=loss, metrics=['accuracy'])  # Seems to work better
-            # optimizer = tf.keras.optimizers.Nadam(learning_rate=learning_rate)
-            # optimizer = tf.keras.optimizers.RMSprop(learning_rate=learning_rate)
-            optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate)
-            model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
+            if self._optimizer.lower() == 'sgd':
+                optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate)
+            elif self._optimizer.lower() == 'adam':
+                # optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate, amsgrad=True)
+                optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+            elif self._optimizer.lower() == 'nadam':
+                optimizer = tf.keras.optimizers.Nadam(learning_rate=learning_rate)
+            elif self._optimizer.lower() == 'rmsprop':
+                optimizer = tf.keras.optimizers.RMSprop(learning_rate=learning_rate)
+            else:
+                optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate)
 
+            model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
             model.summary()
             return model
 
@@ -167,7 +187,8 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
                                      y=y_train,
                                      epochs=n_epochs,
                                      batch_size=batch_size,
-                                     validation_data=(X_val, y_val))
+                                     validation_data=(X_val, y_val),
+                                     callbacks=[self.checkpoint_callback])
             # test_loss, test_accuracy = self.model.evaluate(X_val, y_val)
 
         # print(f"Test loss: {test_loss:0.4f}, "
@@ -179,7 +200,8 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
             history = self.model.fit(train_gen,
                                      epochs=n_epochs,
                                      batch_size=batch_size,
-                                     validation_data=valid_gen)
+                                     validation_data=valid_gen,
+                                     callbacks=[self.checkpoint_callback])
         return history
 
     def predict_classes(self, input_data):
@@ -197,16 +219,22 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
         predictions = predictions.numpy()
         return predictions
 
-    def get_full_model_filename(self, model_filename):
-        model_filename += f'_tf_d_{self.activation}'  # Specify using Tensorflow
+    def get_full_model_filepath(self, model_filename):
+        model_filename += f'_tf_d_{self.activation}_{self.dropout}_do_{self._optimizer}'
         return model_filename
 
-    def save_model(self, model_filename, rel_path='models'):
-        model_filename = self.get_full_model_filename(model_filename)
-        model_filename = self.add_file_type(model_filename)
+    def save_model(self, model_filename, rel_path='models', using_checkpoints=True):
+        model_filepath = self.get_full_model_filepath(model_filename)
+        if using_checkpoints:
+            # Load best weights first:
+            self.model = load_model(f'{PROJECT_ROOT}/{rel_path}/{model_filepath}')
+        model_filename = self.add_file_type(model_filepath)
         self.model.save(f'{PROJECT_ROOT}/{rel_path}/{model_filename}', save_format='h5')
 
-    def load_model(self, model_filename, rel_path='models'):
-        model_filename = self.get_full_model_filename(model_filename)
-        model_filename = self.add_file_type(model_filename)
-        self.model = load_model(f'{PROJECT_ROOT}/{rel_path}/{model_filename}')
+    def load_model(self, model_filename, rel_path='models', is_checkpoint=False):
+        model_filepath = self.get_full_model_filepath(model_filename)
+        if is_checkpoint:
+            self.model = load_model(f'{PROJECT_ROOT}/{rel_path}/{model_filepath}')
+        else:
+            model_filename = self.add_file_type(model_filepath)
+            self.model = load_model(f'{PROJECT_ROOT}/{rel_path}/{model_filename}')
