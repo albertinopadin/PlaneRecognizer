@@ -27,23 +27,30 @@ else:
 
 N_OUTPUT = 6
 
+# LEARNING_RATE = 1.0 if in_mac_os() else 1.0
 # LEARNING_RATE = 0.1 if in_mac_os() else 0.1
 # LEARNING_RATE = 0.03 if in_mac_os() else 0.03
-# LEARNING_RATE = 0.01 if in_mac_os() else 0.01  # Best starting learning rate
+LEARNING_RATE = 0.01 if in_mac_os() else 0.01  # Best starting learning rate
 # LEARNING_RATE = 0.003 if in_mac_os() else 0.003
 # LEARNING_RATE = 0.001 if in_mac_os() else 0.001
 # LEARNING_RATE = 0.0003 if in_mac_os() else 0.0003
-LEARNING_RATE = 0.0001 if in_mac_os() else 0.0001  # Good starting for Adam
+# LEARNING_RATE = 0.0001 if in_mac_os() else 0.0001  # Good starting for Adam
 # LEARNING_RATE = 0.00001 if in_mac_os() else 0.00001
 # LEARNING_RATE = 0.000001 if in_mac_os() else 0.000001
 # LEARNING_RATE = 0.0000001 if in_mac_os() else 0.0000001
 
+# DROPOUT = 0.0
 DROPOUT = 0.5
-OPTIM = 'adam'
-ACTIVATION = 'mish'
+OPTIM = 'sgd'
+# OPTIM = 'adam'
+# ACTIVATION = 'relu'
+ACTIVATION = 'swish'
+# ACTIVATION = 'mish'
+
+NUM_START_FILTERS = 64
 
 # Set the following flag to load a saved model:
-LOAD_EXISTING_MODEL = True if in_mac_os() else False
+LOAD_EXISTING_MODEL = True if in_mac_os() else True
 # Set the following flag to save model after training:
 SAVE_MODEL = True
 
@@ -61,6 +68,7 @@ jet_recognizer = TensorflowDeeperCNN(INPUT_SHAPE,
                                      activation=ACTIVATION,
                                      dropout=DROPOUT,
                                      optimizer=OPTIM,
+                                     n_start_filters=NUM_START_FILTERS,
                                      filename=JET_RECOGNIZER_MODEL_FILENAME)
 
 if LOAD_EXISTING_MODEL:
@@ -103,7 +111,7 @@ else:
 # show_tensorflow_histories(histories)
 
 img_target_size = (862, 862, 3)
-batch_size = 8 if in_mac_os() else 8
+batch_size = 2 if in_mac_os() else 8
 
 train_dir = SIZE_1920_DIR + '/train'
 # train_gen = ImageGenerator(train_dir,
@@ -133,7 +141,7 @@ valid_dsl = ImageDatasetLoader(valid_dir,
                                one_hot_labels=True,
                                validation=True)
 
-n_epochs = 3 if in_mac_os() else 30
+n_epochs = 5 if in_mac_os() else 30
 
 print(f"\n************ Starting training for {n_epochs} epochs in "
       f"{'macOS' if in_mac_os() else 'Linux'}... ************\n")
