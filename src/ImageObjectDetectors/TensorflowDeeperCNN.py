@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPool2D, Dense, Flatten, Dropout
+from tensorflow.keras.layers import Conv2D, MaxPool2D, Dense, Flatten, Dropout, GlobalAveragePooling2D, BatchNormalization
 from tensorflow.keras.models import load_model
 from tensorflow.keras.callbacks import ModelCheckpoint
 from Common import test_training_utils as ttu
@@ -27,6 +27,7 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
                  activation='relu',
                  dropout=0.5,
                  optimizer='sgd',
+                 n_start_filters=64,
                  default_seed=CNN4ImagesBase.DEFAULT_SEED,
                  filename='tensorflow_deeper'):
         if activation == 'mish':
@@ -42,6 +43,7 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
         self.activation = activation
         self.dropout = dropout
         self._optimizer = optimizer
+        self.n_start_filters = n_start_filters
         model_fn = self.get_full_model_filepath(model_filename=filename)
         self.checkpoint_callback = ModelCheckpoint(
             # filepath=f'{PROJECT_ROOT}/models/checkpoint_{model_fn}',
@@ -72,16 +74,24 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
 
             model = Sequential([
                 conv_layer_input,
+                BatchNormalization(),
                 MaxPool2D(pool_size=(2, 2)),
                 conv_layer_2,
+                BatchNormalization(),
                 MaxPool2D(pool_size=(2, 2)),
                 conv_layer_3,
+                BatchNormalization(),
                 MaxPool2D(pool_size=(2, 2)),
                 conv_layer_4,
+                BatchNormalization(),
                 MaxPool2D(pool_size=(2, 2)),
                 conv_layer_5,
-                MaxPool2D(pool_size=(2, 2)),
+                BatchNormalization(),
+                # MaxPool2D(pool_size=(2, 2)),
+                GlobalAveragePooling2D(),
                 Flatten(),
+                Dense(units=128, activation=activation),
+                Dropout(dropout),
                 Dense(units=64, activation=activation),
                 Dropout(dropout),
                 Dense(units=64, activation=activation),
@@ -107,7 +117,7 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
             model.summary()
             return model
 
-    def create_conv2d(self, n_filters, kernel_size, stride, padding, activation, kernel_initializer, name, input_shape=None):
+    def create_conv2d(self, n_filters, kernel_size, stride, padding, activation,  kernel_initializer, name, input_shape=None):
         with tf.device('/GPU:0'):
             if input_shape is None:
                 return Conv2D(filters=n_filters,
@@ -131,45 +141,49 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
 
     def create_conv_layers(self, input_shape, kernel_init, activation):
         conv_layer_input = self.create_conv2d(input_shape=input_shape,
-                                              n_filters=32,
+                                              n_filters=self.n_start_filters,
                                               kernel_size=(3, 3),
                                               stride=1,
                                               padding='valid',
                                               activation=activation,
                                               kernel_initializer=kernel_init,
-                                              name='conv32_input_layer')  # (((862 - 3)/1) + 1)/2 -> 430, /2 is MaxPool
+                                              name=f'conv{self.n_start_filters}_input_layer')  # (((862 - 3)/1) + 1)/2 -> 430, /2 is MaxPool
 
-        conv_layer_2 = self.create_conv2d(n_filters=64,
+        n_filters_layer_2 = self.n_start_filters * 2
+        conv_layer_2 = self.create_conv2d(n_filters=n_filters_layer_2,
                                           kernel_size=(3, 3),
                                           stride=1,
                                           padding='valid',
                                           activation=activation,
                                           kernel_initializer=kernel_init,
-                                          name='conv64_k3_layer')  # 430 -> 214
+                                          name=f'conv{n_filters_layer_2}_k3_layer')  # 430 -> 214
 
-        conv_layer_3 = self.create_conv2d(n_filters=128,
+        n_filters_layer_3 = self.n_start_filters * 4
+        conv_layer_3 = self.create_conv2d(n_filters=n_filters_layer_3,
                                           kernel_size=(3, 3),
                                           stride=1,
                                           padding='valid',
                                           activation=activation,
                                           kernel_initializer=kernel_init,
-                                          name='conv128_k3_layer')  # 214 -> 106
+                                          name=f'conv{n_filters_layer_3}_k3_layer')  # 214 -> 106
 
-        conv_layer_4 = self.create_conv2d(n_filters=256,
+        n_filters_layer_4 = self.n_start_filters * 8
+        conv_layer_4 = self.create_conv2d(n_filters=n_filters_layer_4,
                                           kernel_size=(3, 3),
                                           stride=1,
                                           padding='valid',
                                           activation=activation,
                                           kernel_initializer=kernel_init,
-                                          name='conv256_k3_layer')  # 106 -> 52
+                                          name=f'conv{n_filters_layer_4}_k3_layer')  # 106 -> 52
 
-        conv_layer_5 = self.create_conv2d(n_filters=512,
+        n_filters_layer_5 = self.n_start_filters * 16
+        conv_layer_5 = self.create_conv2d(n_filters=n_filters_layer_5,
                                           kernel_size=(3, 3),
                                           stride=1,
                                           padding='valid',
                                           activation=activation,
                                           kernel_initializer=kernel_init,
-                                          name='conv512_k3_layer')  # 52 -> 25
+                                          name=f'conv{n_filters_layer_5}_k3_layer')  # 52 -> 25
 
         return conv_layer_input, conv_layer_2, conv_layer_3, conv_layer_4, conv_layer_5
 
@@ -220,7 +234,7 @@ class TensorflowDeeperCNN(CNN4ImagesBase):
         return predictions
 
     def get_full_model_filepath(self, model_filename):
-        model_filename += f'_tf_d_{self.activation}_{self.dropout}_do_{self._optimizer}'
+        model_filename += f'_tf_d_{self.activation}_{self.dropout}_do_{self._optimizer}_{self.n_start_filters}_sf_bn'
         return model_filename
 
     def save_model(self, model_filename, rel_path='models', using_checkpoints=True):
