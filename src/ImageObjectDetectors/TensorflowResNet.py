@@ -1,8 +1,7 @@
-from pickletools import optimize
-from unicodedata import name
+from warnings import filters
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.layers import Add, Activation, Input, Conv2D, MaxPool2D, Dense, Flatten, Dropout, GlobalAveragePooling2D, BatchNormalization
+from tensorflow.keras.layers import Add, Activation, Input, Conv2D, MaxPool2D, Dense, Dropout, GlobalAveragePooling2D, BatchNormalization
 from tensorflow.keras.models import load_model, Model
 from tensorflow.keras.callbacks import ModelCheckpoint
 from Common import test_training_utils as ttu
@@ -17,8 +16,10 @@ print(f"physical_devices: {physical_devices}")
 
 KERNEL_SIZE = (3, 3)
 STRIDE = 1
-PADDING = 'valid'
+# PADDING = 'valid'
+PADDING = 'same'  # Has to be same for ResNet blocks
 NUM_RESNET_BLOCKS_PER_FILTER_SIZE = 4
+MAX_POOL_SIZE = (2, 2)
 
 
 class TensorflowResNet(CNN4ImagesBase):
@@ -29,7 +30,9 @@ class TensorflowResNet(CNN4ImagesBase):
                  activation='relu',
                  dropout=0.5,
                  optimizer='sgd',
-                 n_start_filters=64,
+                 n_start_filters=32,
+                 n_resnet_filter_blocks=2,
+                 n_resnet_blocks_per_filter_block=NUM_RESNET_BLOCKS_PER_FILTER_SIZE,
                  default_seed=CNN4ImagesBase.DEFAULT_SEED,
                  filename='tensorflow_deeper'):
         if activation == 'mish':
@@ -46,6 +49,8 @@ class TensorflowResNet(CNN4ImagesBase):
         self.dropout = dropout
         self._optimizer = optimizer
         self.n_start_filters = n_start_filters
+        self.num_resnet_filter_blocks = n_resnet_filter_blocks,
+        self.num_resnet_blocks_per_filter_block = n_resnet_blocks_per_filter_block
         model_fn = self.get_full_model_filepath(model_filename=filename)
         self.checkpoint_callback = ModelCheckpoint(
             # filepath=f'{PROJECT_ROOT}/models/checkpoint_{model_fn}',
@@ -56,7 +61,7 @@ class TensorflowResNet(CNN4ImagesBase):
             save_best_only=True,
             verbose=1
         )
-        self.model = self.construct_model(input_shape, n_output, learning_rate, activation, dropout, default_seed)
+        self.model = self.construct_model(input_shape, n_output, learning_rate, activation, dropout, n_resnet_filter_blocks, default_seed)
 
     def get_output_layer_and_loss(self, n_output):
         if n_output == 1:
@@ -82,7 +87,7 @@ class TensorflowResNet(CNN4ImagesBase):
         return optimizer
 
     # Using Keras Functional API since ResNets aren't sequential:
-    def construct_model(self, input_shape, n_output, learning_rate, activation, dropout, default_seed):
+    def construct_model(self, input_shape, n_output, learning_rate, activation, dropout, n_resnet_filter_blocks, default_seed):
         print(f'TF Keras backend: {tf.keras.backend}')
         with tf.device('/GPU:0'):
             kernel_init = tf.keras.initializers.glorot_uniform(seed=default_seed)
@@ -94,33 +99,50 @@ class TensorflowResNet(CNN4ImagesBase):
             first_block_num_filters = self.n_start_filters * 2
 
             inputs = Input(shape=input_shape)
-            x = Conv2D( filters=self.n_start_filters,
-                        kernel_size=KERNEL_SIZE,
-                        strides=STRIDE,
-                        padding=PADDING,
-                        activation=activation,
-                        data_format='channels_last',
-                        kernel_initializer=kernel_init,
-                        name="Conv1")(inputs)
+            x = Conv2D(filters=self.n_start_filters,
+                       kernel_size=KERNEL_SIZE,
+                       strides=STRIDE,
+                       padding=PADDING,
+                       activation=activation,
+                       data_format='channels_last',
+                       kernel_initializer=kernel_init,
+                       name="Conv1")(inputs)
             
-            x = Conv2D( filters=first_block_num_filters,
-                        kernel_size=KERNEL_SIZE,
-                        strides=STRIDE,
-                        padding=PADDING,
-                        activation=activation,
-                        data_format='channels_last',
-                        kernel_initializer=kernel_init,
-                        name="Conv2")(x)
+            x = Conv2D(filters=first_block_num_filters,
+                       kernel_size=KERNEL_SIZE,
+                       strides=STRIDE,
+                       padding=PADDING,
+                       activation=activation,
+                       data_format='channels_last',
+                       kernel_initializer=kernel_init,
+                       name="Conv2")(x)
 
-            for i in range(NUM_RESNET_BLOCKS_PER_FILTER_SIZE):
-                x = self.resnet_block(x, 
-                                      first_block_num_filters, 
-                                      KERNEL_SIZE, 
-                                      STRIDE, 
-                                      PADDING, 
-                                      activation, 
-                                      kernel_init, 
-                                      "ResNet_BLK_1")
+            x = MaxPool2D(pool_size=MAX_POOL_SIZE)(x)
+
+            block_num_filters = first_block_num_filters
+            for filter_block in range(n_resnet_filter_blocks):
+                for resnet_block in range(self.num_resnet_blocks_per_filter_block):
+                    x = self.resnet_block(x, 
+                                          block_num_filters, 
+                                          KERNEL_SIZE, 
+                                          STRIDE, 
+                                          PADDING, 
+                                          activation, 
+                                          kernel_init, 
+                                          f"ResNet_F_{filter_block + 1}_BLK_{resnet_block + 1}")
+                if filter_block < n_resnet_filter_blocks - 1:
+                    # TODO: This doesn't work - you need intermediate layer to add next resnet block increase in layers
+                    # Update number of block filters:
+                    block_num_filters *= 2
+                    # Intermediate layer to add filters:
+                    x = Conv2D(filters=block_num_filters,
+                               kernel_size=KERNEL_SIZE,
+                               strides=STRIDE,
+                               padding=PADDING,
+                               activation=activation,
+                               data_format='channels_last',
+                               kernel_initializer=kernel_init,
+                               name=f"ConvUpdateNumFilters_{block_num_filters}")(x)
             
             x = Conv2D(filters=first_block_num_filters,
                        kernel_size=KERNEL_SIZE,
@@ -132,8 +154,7 @@ class TensorflowResNet(CNN4ImagesBase):
                        name="ConvLast")(x)
 
             x = GlobalAveragePooling2D()(x)
-
-            x = Dense(units=256, activation=activation),
+            x = Dense(units=256, activation=activation)(x)
             x = Dropout(dropout)(x)
             outputs = output_layer(x)
 
@@ -144,104 +165,27 @@ class TensorflowResNet(CNN4ImagesBase):
 
     # With inspiration from:
     # https://adventuresinmachinelearning.com/introduction-resnet-tensorflow-2/
-    def resnet_block(input_data, n_filters, kernel_size, stride, padding, activation, kernel_initializer, name_prefix):
-        conv1 = Conv2D(filters=n_filters,
-                        kernel_size=kernel_size,
-                        strides=stride,
-                        padding=padding,
-                        activation=activation,
-                        data_format='channels_last',
-                        kernel_initializer=kernel_initializer,
-                        name=f'{name_prefix}_1_conv2D_{kernel_size[0]}x{kernel_size[1]}_{n_filters}')
-        batch_norm = BatchNormalization()
-        conv2 = Conv2D(filters=n_filters,
-                        kernel_size=kernel_size,
-                        strides=stride,
-                        padding=padding,
-                        activation=activation,
-                        data_format='channels_last',
-                        kernel_initializer=kernel_initializer,
-                        name=f'{name_prefix}_2_conv2D_{kernel_size[0]}x{kernel_size[1]}_{n_filters}')
-        skip_add = Add()  # TODO: Define this properly
-        activation = Activation('relu')
-        return [
-            conv1,
-            batch_norm,
-            conv2,
-            batch_norm,
-            skip_add,
-            activation
-        ]
-
-    def create_conv2d(self, n_filters, kernel_size, stride, padding, activation,  kernel_initializer, name, input_shape=None):
-        with tf.device('/GPU:0'):
-            if input_shape is None:
-                return Conv2D(filters=n_filters,
-                              kernel_size=kernel_size,
-                              strides=stride,
-                              padding=padding,
-                              activation=activation,
-                              data_format='channels_last',
-                              kernel_initializer=kernel_initializer,
-                              name=name)
-            else:
-                return Conv2D(input_shape=input_shape,
-                              filters=n_filters,
-                              kernel_size=kernel_size,
-                              strides=stride,
-                              padding=padding,
-                              activation=activation,
-                              data_format='channels_last',
-                              kernel_initializer=kernel_initializer,
-                              name=name)
-
-    def create_conv_layers(self, input_shape, kernel_init, activation):
-        conv_layer_input = self.create_conv2d(input_shape=input_shape,
-                                              n_filters=self.n_start_filters,
-                                              kernel_size=(3, 3),
-                                              stride=1,
-                                              padding='valid',
-                                              activation=activation,
-                                              kernel_initializer=kernel_init,
-                                              name=f'conv{self.n_start_filters}_input_layer')  # (((862 - 3)/1) + 1)/2 -> 430, /2 is MaxPool
-
-        n_filters_layer_2 = self.n_start_filters * 2
-        conv_layer_2 = self.create_conv2d(n_filters=n_filters_layer_2,
-                                          kernel_size=(3, 3),
-                                          stride=1,
-                                          padding='valid',
-                                          activation=activation,
-                                          kernel_initializer=kernel_init,
-                                          name=f'conv{n_filters_layer_2}_k3_layer')  # 430 -> 214
-
-        n_filters_layer_3 = self.n_start_filters * 4
-        conv_layer_3 = self.create_conv2d(n_filters=n_filters_layer_3,
-                                          kernel_size=(3, 3),
-                                          stride=1,
-                                          padding='valid',
-                                          activation=activation,
-                                          kernel_initializer=kernel_init,
-                                          name=f'conv{n_filters_layer_3}_k3_layer')  # 214 -> 106
-
-        n_filters_layer_4 = self.n_start_filters * 8
-        conv_layer_4 = self.create_conv2d(n_filters=n_filters_layer_4,
-                                          kernel_size=(3, 3),
-                                          stride=1,
-                                          padding='valid',
-                                          activation=activation,
-                                          kernel_initializer=kernel_init,
-                                          name=f'conv{n_filters_layer_4}_k3_layer')  # 106 -> 52
-
-        n_filters_layer_5 = self.n_start_filters * 16
-        conv_layer_5 = self.create_conv2d(n_filters=n_filters_layer_5,
-                                          kernel_size=(3, 3),
-                                          stride=1,
-                                          padding='valid',
-                                          activation=activation,
-                                          kernel_initializer=kernel_init,
-                                          name=f'conv{n_filters_layer_5}_k3_layer')  # 52 -> 25
-
-        return conv_layer_input, conv_layer_2, conv_layer_3, conv_layer_4, conv_layer_5
+    def resnet_block(self, input_data, n_filters, kernel_size, stride, padding, activation, kernel_initializer, name_prefix):
+        x = Conv2D(filters=n_filters,
+                    kernel_size=kernel_size,
+                    strides=stride,
+                    padding=padding,
+                    activation=activation,
+                    data_format='channels_last',
+                    kernel_initializer=kernel_initializer,
+                    name=f'{name_prefix}_1_conv2D_{kernel_size[0]}x{kernel_size[1]}_{n_filters}')(input_data)
+        x = BatchNormalization()(x)
+        x = Conv2D(filters=n_filters,
+                    kernel_size=kernel_size,
+                    strides=stride,
+                    padding=padding,
+                    activation=None,  # Activation will be applied after residual addition
+                    data_format='channels_last',
+                    kernel_initializer=kernel_initializer,
+                    name=f'{name_prefix}_2_conv2D_{kernel_size[0]}x{kernel_size[1]}_{n_filters}')(x)
+        x = Add()([x, input_data])
+        x = Activation(activation)(x)
+        return x
 
     def train(self,
               train_images,
@@ -290,7 +234,8 @@ class TensorflowResNet(CNN4ImagesBase):
         return predictions
 
     def get_full_model_filepath(self, model_filename):
-        model_filename += f'_tf_d_{self.activation}_{self.dropout}_do_{self._optimizer}_{self.n_start_filters}_sf'
+        model_filename += f'_tf_d_{self.activation}_{self.dropout}_do_{self._optimizer}_{self.n_start_filters}_' + \
+                          f'sf_bn_{self.num_resnet_filter_blocks}_rfb_{self.num_resnet_blocks_per_filter_block}_rbpfb'
         return model_filename
 
     def save_model(self, model_filename, rel_path='models', using_checkpoints=True):
